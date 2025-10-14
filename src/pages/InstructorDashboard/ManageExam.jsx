@@ -14,6 +14,7 @@ import {
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import api from "../../api";
 
 const ManageExam = () => {
   const [exams, setExams] = useState([]);
@@ -40,9 +41,7 @@ const ManageExam = () => {
   useEffect(() => {
     const fetchExams = async () => {
       try {
-        const res = await axios.get(
-          `http://localhost:5000/api/exams-instructor/${instructorId}`
-        );
+        const res = await api.get(`/api/exams-instructor/${instructorId}`);
         setExams(res.data.filter((e) => e.exam_type === "Exam"));
         setActivities(res.data.filter((e) => e.exam_type === "Activity"));
       } catch (err) {
@@ -57,17 +56,14 @@ const ManageExam = () => {
   const fetchExamData = async (examId) => {
     try {
       setLoading(true);
-
       const [enrolledRes, allRes, questionsRes, instrRes] = await Promise.all([
-        axios.get(`http://localhost:5000/api/exam_students/${examId}`),
-        axios.get("http://localhost:5000/api/students"),
-        axios.get(`http://localhost:5000/api/exam_questions/${examId}`),
-        axios.get(`http://localhost:5000/api/exam_instructions/${examId}`, {
-          //  allow 404 so Promise.all doesn't reject
+        api.get(`/api/exam_students/${examId}`),
+        api.get("/api/students"),
+        api.get(`/api/exam_questions/${examId}`),
+        api.get(`/api/exam_instructions/${examId}`, {
           validateStatus: (s) => (s >= 200 && s < 300) || s === 404,
         }),
       ]);
-
       setEnrolledStudents(enrolledRes.data);
       setAllStudents(allRes.data);
       setSelectedExam((prev) => ({ ...prev, questions: questionsRes.data }));
@@ -96,7 +92,7 @@ const ManageExam = () => {
       window.confirm(`Are you sure you want to delete this ${exam.exam_type}?`)
     ) {
       try {
-        await axios.delete(`http://localhost:5000/api/exams/${examId}`);
+        await api.delete(`/api/exams/${examId}`);
         if (exam.exam_type === "Exam") {
           setExams((prev) => prev.filter((e) => e.id !== examId));
         } else {
@@ -121,7 +117,7 @@ const ManageExam = () => {
     }
 
     try {
-      await axios.post(`http://localhost:5000/api/exam_students`, {
+      await api.post("/api/exam_students", {
         exam_id: selectedExam.id,
         student_id: selectedStudent,
       });
@@ -135,9 +131,7 @@ const ManageExam = () => {
 
   const handleRemoveStudent = async (studentId) => {
     try {
-      await axios.delete(
-        `http://localhost:5000/api/exam_students/${selectedExam.id}/${studentId}`
-      );
+      await api.delete(`/api/exam_students/${selectedExam.id}/${studentId}`);
       toast.success("Student removed successfully");
       fetchExamData(selectedExam.id);
     } catch (err) {
@@ -147,16 +141,13 @@ const ManageExam = () => {
 
   const handleSaveChanges = async () => {
     try {
-      await axios.put(
-        `http://localhost:5000/api/update-exams/${selectedExam.id}`,
-        {
-          title: selectedExam.title,
-          description: selectedExam.description,
-          duration_minutes: selectedExam.duration_minutes,
-          exam_date: selectedExam.exam_date,
-          start_time: selectedExam.start_time,
-        }
-      );
+      await api.put(`/api/update-exams/${selectedExam.id}`, {
+        title: selectedExam.title,
+        description: selectedExam.description,
+        duration_minutes: selectedExam.duration_minutes,
+        exam_date: selectedExam.exam_date,
+        start_time: selectedExam.start_time,
+      });
       toast.success(`${selectedExam.exam_type} updated successfully!`);
       window.location.reload();
     } catch (err) {
@@ -175,9 +166,7 @@ const ManageExam = () => {
   const handleDeleteQuestion = async (questionId) => {
     if (!window.confirm("Delete this question?")) return;
     try {
-      await axios.delete(
-        `http://localhost:5000/api/exam_questions/${questionId}`
-      );
+      await api.delete(`/api/exam_questions/${questionId}`);
       toast.success("Question deleted");
       fetchExamData(selectedExam.id);
     } catch (err) {
@@ -202,10 +191,9 @@ const ManageExam = () => {
     }
     try {
       setSavingInstructions(true);
-      await axios.put(
-        `http://localhost:5000/api/exam_instructions/${selectedExam.id}`,
-        { instructions: examInstructions }
-      );
+      await api.put(`/api/exam_instructions/${selectedExam.id}`, {
+        instructions: examInstructions,
+      });
       toast.success("Instructions saved");
     } catch (err) {
       toast.error("Failed to save instructions");

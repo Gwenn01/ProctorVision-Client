@@ -22,8 +22,7 @@ import {
 } from "react-icons/bs";
 import "react-toastify/dist/ReactToastify.css";
 import "./../../styles/indicatior.css";
-
-const API_BASE = "http://localhost:5000/api";
+import api from "../../api";
 
 const StudentBehavior = () => {
   const [exams, setExams] = useState([]);
@@ -45,9 +44,7 @@ const StudentBehavior = () => {
     const fetchExams = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(
-          `http://localhost:5000/api/exams-instructor/${instructorId}`
-        );
+        const res = await api.get(`/api/exams-instructor/${instructorId}`);
         setExams(res.data);
       } catch (err) {
         toast.error("Failed to load exams & activities");
@@ -68,12 +65,8 @@ const StudentBehavior = () => {
 
       try {
         const [studentRes, submittedRes] = await Promise.all([
-          axios.get(
-            `http://localhost:5000/api/exam-assigned-students/${selectedExam.id}`
-          ),
-          axios.get(
-            `http://localhost:5000/api/exam-submissions/${selectedExam.id}`
-          ),
+          api.get(`/api/exam-assigned-students/${selectedExam.id}`),
+          api.get(`/api/exam-submissions/${selectedExam.id}`),
         ]);
 
         const studentsData = studentRes.data;
@@ -132,7 +125,7 @@ const StudentBehavior = () => {
           );
 
           for (const student of unsubmittedStudents) {
-            await axios.post("http://127.0.0.1:5000/api/update_status_timeup", {
+            await api.post("/api/update_status_timeup", {
               student_id: student.student_id || student.id,
             });
           }
@@ -193,13 +186,12 @@ const StudentBehavior = () => {
     setSelectedExam(exam);
     setSelectedStudent(null);
     try {
-      const studentRes = await axios.get(
-        `http://localhost:5000/api/exam-assigned-students/${exam.id}`
+      const studentRes = await api.get(
+        `/api/exam-assigned-students/${exam.id}`
       );
       const studentsData = studentRes.data;
-      const submittedRes = await axios.get(
-        `http://localhost:5000/api/exam-submissions/${exam.id}`
-      );
+
+      const submittedRes = await api.get(`/api/exam-submissions/${exam.id}`);
       const submittedIds = submittedRes.data;
 
       const merged = studentsData.map((student) => ({
@@ -217,9 +209,7 @@ const StudentBehavior = () => {
     setSelectedExam(exam);
     setSelectedStudent(null);
     try {
-      const res = await axios.get(
-        `http://localhost:5000/api/exam-behavior/${exam.id}`
-      );
+      const res = await api.get(`/api/exam-behavior/${exam.id}`);
       const sortedStudents = res.data.sort((a, b) => {
         const statusPriority = {
           Cheated: 0,
@@ -239,8 +229,8 @@ const StudentBehavior = () => {
     setSelectedStudent(student);
     const studentId = student.student_id || student.id;
     try {
-      const res = await axios.get(
-        `http://localhost:5000/api/behavior-images/${selectedExam.id}/${studentId}`
+      const res = await api.get(
+        `/api/behavior-images/${selectedExam.id}/${studentId}`
       );
       setBehaviorLogs(res.data);
       setShowBehaviorModal(true);
@@ -284,15 +274,19 @@ const StudentBehavior = () => {
     try {
       let res;
 
-      // 🔍 Check if this is a coding exam
       if (selectedExam.exam_category?.toLowerCase() === "coding") {
-        res = await axios.get(
-          `${API_BASE}/coding_submission/${selectedExam.id}/${studentId}`
+        // 🧠 Coding exam submission endpoint
+        res = await api.get(
+          `/coding_submission/${selectedExam.id}/${studentId}`
         );
       } else {
-        res = await axios.get(
-          `${API_BASE}/exam-review?exam_id=${selectedExam.id}&user_id=${studentId}`
-        );
+        // 🧠 Regular exam review endpoint
+        res = await api.get("/exam-review", {
+          params: {
+            exam_id: selectedExam.id,
+            user_id: studentId,
+          },
+        });
       }
 
       if (res.data) {

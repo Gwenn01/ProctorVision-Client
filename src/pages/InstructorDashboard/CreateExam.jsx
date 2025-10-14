@@ -15,6 +15,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Spinner from "../../components/Spinner";
 import { FaSearch } from "react-icons/fa";
+import api from "../../api";
 
 const CreateExam = () => {
   const userData = JSON.parse(localStorage.getItem("userData") || "{}");
@@ -53,8 +54,8 @@ const CreateExam = () => {
 
   const fetchAllStudents = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/all-students");
-      setAllStudents(res.data);
+      const { data } = await api.get("/api/all-students");
+      setAllStudents(data);
     } catch (err) {
       toast.error("Failed to load students.");
     }
@@ -131,11 +132,7 @@ const CreateExam = () => {
       const fd = new FormData();
       fd.append("file", file);
 
-      const res = await axios.post(
-        "http://localhost:5000/api/parse-instructions",
-        fd,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      );
+      const res = await api.post("/api/parse-instructions", fd);
 
       const text = (res?.data?.instructions || "").trim();
 
@@ -265,13 +262,8 @@ const CreateExam = () => {
 
     try {
       setLoading(true);
-      const res = await axios.post(
-        "http://localhost:5000/api/parse-questions",
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        }
-      );
+
+      const res = await api.post("/api/parse-questions", formData);
       // Merge parsed questions into state
       // Merge parsed questions into state
       setQuestions([
@@ -337,11 +329,7 @@ const CreateExam = () => {
 
     try {
       setLoading(true);
-      const res = await axios.post(
-        "http://localhost:5000/api/create-exam",
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      );
+      const res = await api.post("/api/create-exam", formData);
       toast.success(`${examType} created successfully!`);
       window.location.reload();
       console.log(`${examType} Created:`, res.data);
