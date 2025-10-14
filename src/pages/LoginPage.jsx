@@ -7,6 +7,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Spinner from "../components/Spinner";
 import logo from "../assets/prmsu-logo.png";
 import "../styles/loginpage.css";
+import api from "../api";
 
 const LoginPage = () => {
   const [loading, setLoading] = useState(false);
@@ -23,28 +24,25 @@ const LoginPage = () => {
 
     try {
       setLoading(true);
-      const response = await fetch("http://127.0.0.1:5000/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
+      // ✅ Axios automatically parses response JSON
+      const { data } = await api.post("/api/login", { username, password });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Login failed");
-      }
       toast.success(data.message || "Login successful!");
       localStorage.setItem("token", data.token);
       localStorage.setItem("isAuthenticated", "true");
       localStorage.setItem("userData", JSON.stringify(data));
 
-      // Navigate based on role
       setTimeout(() => {
         navigate("/dashboard");
       }, 1000);
     } catch (error) {
-      toast.error(error.message);
+      // ✅ Axios puts server errors in error.response
+      const message =
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        error.message ||
+        "Network error";
+      toast.error(message);
     } finally {
       setLoading(false);
     }

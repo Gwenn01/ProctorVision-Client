@@ -18,8 +18,9 @@ import {
   startProctoringWebRTC,
   stopProctoringWebRTC,
 } from "../../utils/proctorRTC";
+import api from "../../api";
 
-const API_BASE = process.env.REACT_APP_API_BASE_URL || "http://127.0.0.1:5000";
+const API_BASE = "http://127.0.0.1:5000";
 
 const TakeExam = () => {
   const [exams, setExams] = useState([]);
@@ -166,12 +167,14 @@ const TakeExam = () => {
       const userData = JSON.parse(localStorage.getItem("userData"));
       const studentId = userData?.id;
       try {
-        const examsRes = await axios.get(
-          `${API_BASE}/api/get_exam?student_id=${studentId}`
-        );
-        const submissionsRes = await axios.get(
-          `${API_BASE}/api/get_exam_submissions?user_id=${studentId}`
-        );
+        const examsRes = await api.get("/api/get_exam", {
+          params: { student_id: studentId },
+        });
+
+        const submissionsRes = await api.get("/api/get_exam_submissions", {
+          params: { user_id: studentId },
+        });
+
         const submittedIds = submissionsRes.data.map((s) => s.exam_id);
         const availableExams = examsRes.data.filter(
           (exam) => !submittedIds.includes(exam.id)
@@ -192,13 +195,12 @@ const TakeExam = () => {
       setExamText("");
       return;
     }
-
     // Try fetching from exam_instructions API
-    axios
-      .get(`${API_BASE}/api/exam_instructions/${selectedExam.id}`)
+    api
+      .get(`/api/exam_instructions/${selectedExam.id}`)
       .then((res) => {
         if (res.data && res.data.instructions) {
-          //  Found instructions in DB
+          // ✅ Found instructions in DB
           setExamText(res.data.instructions);
         } else if (selectedExam.exam_file) {
           // ⬇️ Fallback to file if DB empty
@@ -207,8 +209,8 @@ const TakeExam = () => {
             .split("/")
             .pop();
 
-          axios
-            .get(`${API_BASE}/api/exam_text/${filename}`)
+          api
+            .get(`/api/exam_text/${filename}`)
             .then((res2) => setExamText(res2.data.content))
             .catch((err) =>
               console.error("Failed to load exam text from file:", err)
@@ -321,11 +323,9 @@ const TakeExam = () => {
 
     const notifStart = async () => {
       try {
-        await axios.post(
-          `${API_BASE}/api/update_exam_status_start`,
-          { student_id: studentId },
-          { headers: { "Content-Type": "application/json" } }
-        );
+        await api.post("/api/update_exam_status_start", {
+          student_id: studentId,
+        });
       } catch (err) {
         console.error("Error updating start status:", err);
       }
@@ -440,9 +440,10 @@ const TakeExam = () => {
     const userData = JSON.parse(localStorage.getItem("userData"));
     if (!userData?.id || !selectedExam?.id) return;
 
-    const response = await axios.get(
-      `${API_BASE}/api/get_behavior_logs?user_id=${userData.id}`
-    );
+    const response = await api.get("/api/get_behavior_logs", {
+      params: { user_id: userData.id },
+    });
+
     const logs = response.data.filter((log) => log.exam_id === selectedExam.id);
     setClassifiedLogs(logs.reverse());
   }, [selectedExam]);
@@ -450,8 +451,8 @@ const TakeExam = () => {
   // Fetch questions when exam is selected
   useEffect(() => {
     if (!selectedExam) return;
-    axios
-      .get(`${API_BASE}/api/exam_with_questions/${selectedExam.id}`)
+    api
+      .get(`/api/exam_with_questions/${selectedExam.id}`)
       .then((res) => {
         setQuestions(res.data);
         // reset answers
@@ -481,11 +482,10 @@ const TakeExam = () => {
 
     try {
       //  Update exam status first (for both types)
-      await axios.post(
-        `${API_BASE}/api/update_exam_status_submit`,
-        { student_id: studentId },
-        { headers: { "Content-Type": "application/json" } }
-      );
+      await api.post("/api/update_exam_status_submit", {
+        student_id: studentId,
+      });
+
       toast.success("Exam submitted successfully!");
     } catch {
       toast.error("Failed to submit exam.");
@@ -503,7 +503,7 @@ const TakeExam = () => {
       //  Detect if it's a coding exam
       if (selectedExam.exam_category?.toLowerCase() === "coding") {
         // Submit coding exam to backend
-        const { data } = await axios.post(`${API_BASE}/api/submit_exam`, {
+        const { data } = await api.post("/api/submit_exam", {
           user_id: studentId,
           exam_id: selectedExam.id,
           language,
@@ -521,7 +521,7 @@ const TakeExam = () => {
         setShowCapturedModal(true);
       } else {
         // Normal Q&A exam submission
-        const { data } = await axios.post(`${API_BASE}/api/submit_exam`, {
+        const { data } = await api.post("/api/submit_exam", {
           user_id: studentId,
           exam_id: selectedExam.id,
           answers: studentAnswers,
@@ -574,7 +574,7 @@ const TakeExam = () => {
       setOutput("Running your code...");
 
       //  Axios POST request
-      const res = await axios.post(`${API_BASE}/api/run_code`, {
+      const res = await api.post("/api/run_code", {
         code,
         language,
       });
