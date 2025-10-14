@@ -10,7 +10,6 @@ import {
   Modal,
   Accordion,
 } from "react-bootstrap";
-import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Spinner from "../../components/Spinner";
@@ -129,28 +128,31 @@ const CreateExam = () => {
 
     try {
       setLoading(true);
+
       const fd = new FormData();
       fd.append("file", file);
 
-      const res = await api.post("/api/parse-instructions", fd);
+      // ✅ Explicit multipart header (overrides JSON default)
+      const res = await api.post("/api/parse-instructions", fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
       const text = (res?.data?.instructions || "").trim();
 
       if (!text) {
         toast.warn("No extractable text found in the file.");
       } else {
-        // Put extracted text into the textarea so instructor can edit it
         setExamInstructions(text);
-        // Optionally auto-pick the format as CODING (instructions flow)
         if (!examCategory) setExamCategory("CODING");
         toast.success("Instructions extracted. You can edit them now.");
       }
 
-      // keep the file reference if you still want to submit it with the form
       setExamFile(file);
     } catch (err) {
-      console.error(err);
-      toast.error("Failed to extract text from the file.");
+      console.error("❌ Parse error:", err);
+      toast.error(
+        err.response?.data?.error || "Failed to extract text from the file."
+      );
     } finally {
       setLoading(false);
     }
@@ -263,25 +265,43 @@ const CreateExam = () => {
     try {
       setLoading(true);
 
-      const res = await api.post("/api/parse-questions", formData);
-      // Merge parsed questions into state
-      // Merge parsed questions into state
-      setQuestions([
-        ...questions,
-        ...res.data.questions.map((q) => ({
-          questionText: q.questionText,
-          type: q.type || "mcq", // fallback
-          options: q.options || [],
-          correctAnswer: q.correctAnswer ?? null,
-        })),
-      ]);
+      // Make sure formData contains the file
+      const formData = new FormData();
+      formData.append("file", file);
 
-      // Attach the file to the exam so it gets persisted to DB on save
+      //  Explicit multipart header (overrides JSON default)
+      const res = await api.post("/api/parse-questions", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      //  Validate response data
+      const parsedQuestions = res?.data?.questions || [];
+      if (parsedQuestions.length === 0) {
+        toast.warn("No questions detected in the uploaded file.");
+      } else {
+        //  Merge parsed questions with existing state
+        setQuestions((prev) => [
+          ...prev,
+          ...parsedQuestions.map((q) => ({
+            questionText: q.questionText?.trim() || "Untitled Question",
+            type: q.type || "mcq",
+            options: q.options || [],
+            correctAnswer:
+              q.correctAnswer !== undefined ? q.correctAnswer : null,
+          })),
+        ]);
+
+        toast.success("Questions imported successfully!");
+      }
+
+      // 📎 Keep the uploaded file reference for saving to DB
       setExamFile(file);
-      toast.success("Questions imported! You can now edit them.");
     } catch (err) {
-      toast.error("Failed to parse questions.");
-      console.error(err);
+      console.error("❌ Error parsing questions:", err);
+      toast.error(
+        err.response?.data?.error ||
+          "Failed to parse questions. Please check your file format."
+      );
     } finally {
       setLoading(false);
     }
@@ -329,13 +349,23 @@ const CreateExam = () => {
 
     try {
       setLoading(true);
-      const res = await api.post("/api/create-exam", formData);
+
+      // ✅ Send FormData correctly (for text + file uploads)
+      const res = await api.post("/api/create-exam", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
       toast.success(`${examType} created successfully!`);
-      window.location.reload();
+
       console.log(`${examType} Created:`, res.data);
+
+      // Optional UX: give a short delay before reload
+      setTimeout(() => window.location.reload(), 800);
     } catch (err) {
-      toast.error("Failed to save.");
-      console.error(err);
+      console.error("❌ Failed to create exam:", err.response?.data || err);
+      toast.error(
+        err.response?.data?.error || "Failed to save exam. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -467,7 +497,7 @@ const CreateExam = () => {
                 <div className="d-flex align-items-center justify-content-between mb-2">
                   <div className="d-flex align-items-center gap-2">
                     <i className="bi bi-sliders2-vertical fs-5 text-primary"></i>
-                    <h5 className="fw-semibold mb-0">Exam Format</h5>
+                    <h5 className="fw-semibold mb-0">Format</h5>
                   </div>
                   {examCategory && (
                     <span className="badge bg-light text-dark border">

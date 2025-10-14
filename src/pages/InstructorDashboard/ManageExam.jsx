@@ -229,10 +229,9 @@ const ManageExam = () => {
                   <td>
                     {exam.exam_file ? (
                       <a
-                        href={`http://localhost:5000/${exam.exam_file.replaceAll(
-                          "\\",
-                          "/"
-                        )}`}
+                        href={`${
+                          api.defaults.baseURL
+                        }/${exam.exam_file.replaceAll("\\", "/")}`}
                         target="_blank"
                         rel="noreferrer"
                       >
@@ -508,7 +507,7 @@ const ManageExam = () => {
                       {" "}
                       If needed, see the attached file:{" "}
                       <a
-                        href={`http://localhost:5000/${String(
+                        href={`${api.defaults.baseURL}/${String(
                           selectedExam.exam_file
                         ).replace(/\\/g, "/")}`}
                         target="_blank"
@@ -650,7 +649,7 @@ const ManageExam = () => {
                       {" "}
                       See the attached file:{" "}
                       <a
-                        href={`http://localhost:5000/${String(
+                        href={`${api.defaults.baseURL}/${String(
                           selectedExam.exam_file
                         ).replace(/\\/g, "/")}`}
                         target="_blank"
@@ -814,18 +813,19 @@ const ManageExam = () => {
             onClick={async () => {
               try {
                 if (editingQuestion.id) {
-                  await axios.put(
-                    `http://localhost:5000/api/exam_questions/${editingQuestion.id}`,
+                  await api.put(
+                    `/api/exam_questions/${editingQuestion.id}`,
                     editingQuestion
                   );
-                  toast.success("Question updated");
+                  toast.success("Question updated successfully!");
                 } else {
-                  await axios.post(`http://localhost:5000/api/exam_questions`, {
+                  await api.post("/api/exam_questions", {
                     ...editingQuestion,
                     exam_id: selectedExam.id,
                   });
-                  toast.success("Question added");
+                  toast.success("Question added successfully!");
                 }
+
                 setShowQuestionModal(false);
                 fetchExamData(selectedExam.id);
               } catch (err) {

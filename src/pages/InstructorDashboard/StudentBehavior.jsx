@@ -10,7 +10,6 @@ import {
   Image,
   Button,
 } from "react-bootstrap";
-import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import {
   BsCalendarEvent,
@@ -47,7 +46,9 @@ const StudentBehavior = () => {
         const res = await api.get(`/api/exams-instructor/${instructorId}`);
         setExams(res.data);
       } catch (err) {
-        toast.error("Failed to load exams & activities");
+        toast.error(
+          err.response?.data?.error || "Failed to load exams & activities"
+        );
       } finally {
         setLoading(false);
       }
@@ -272,16 +273,17 @@ const StudentBehavior = () => {
     if (!selectedExam) return toast.error("No exam selected.");
 
     try {
+      setLoading(true);
       let res;
 
       if (selectedExam.exam_category?.toLowerCase() === "coding") {
-        // 🧠 Coding exam submission endpoint
+        // Coding exam review endpoint
         res = await api.get(
-          `/coding_submission/${selectedExam.id}/${studentId}`
+          `/api/coding_submission/${selectedExam.id}/${studentId}`
         );
       } else {
-        // 🧠 Regular exam review endpoint
-        res = await api.get("/exam-review", {
+        //  Regular exam review endpoint
+        res = await api.get("/api/exam-review", {
           params: {
             exam_id: selectedExam.id,
             user_id: studentId,
@@ -289,15 +291,28 @@ const StudentBehavior = () => {
         });
       }
 
-      if (res.data) {
-        setReviewData(res.data);
-        setShowReviewModal(true);
-      } else {
-        toast.warning("No submission found for this student.");
+      //  Handle if no data was returned
+      if (!res.data || Object.keys(res.data).length === 0) {
+        toast.info("No review or submission found for this student yet.");
+        return;
       }
+
+      //  If there is valid data
+      setReviewData(res.data);
+      setShowReviewModal(true);
     } catch (err) {
-      console.error("Error fetching review:", err);
-      toast.error("Failed to load exam review.");
+      console.error(
+        "❌ Error fetching exam review:",
+        err.response?.data || err.message
+      );
+
+      if (err.response?.status === 404) {
+        toast.info("No review available for this student yet.");
+      } else {
+        toast.error("Failed to load exam review. Please try again later.");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
