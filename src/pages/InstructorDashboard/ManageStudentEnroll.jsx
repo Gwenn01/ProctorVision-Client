@@ -9,11 +9,11 @@ import {
   Row,
   Col,
 } from "react-bootstrap";
-import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Spinner from "../../components/Spinner";
 import { Modal } from "react-bootstrap";
+import api from "../../api"
 
 const ManageStudentEnroll = ({ instructorId }) => {
   const [groupedEnrolled, setGroupedEnrolled] = useState([]);
@@ -31,7 +31,7 @@ const ManageStudentEnroll = ({ instructorId }) => {
 
   const fetchAllStudents = useCallback(async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/all-students");
+      const res = await api.get("/api/all-students");
       setAllStudents(res.data);
     } catch (err) {
       toast.error("Failed to load all students.");
@@ -41,9 +41,7 @@ const ManageStudentEnroll = ({ instructorId }) => {
   const fetchEnrolledStudents = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await axios.get(
-        `http://localhost:5000/api/enrolled-students/${instructorId}`
-      );
+     const res = await api.get(`/api/enrolled-students/${instructorId}`);
       groupStudents(res.data);
     } catch (err) {
       toast.error("Failed to load enrolled students.");
@@ -54,7 +52,7 @@ const ManageStudentEnroll = ({ instructorId }) => {
 
   const fetchFilters = useCallback(async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/student-filters");
+      const res = await api.get("/api/student-filters");
       setFilters(res.data);
     } catch (err) {
       toast.error("Failed to load filter options.");
@@ -122,15 +120,12 @@ const ManageStudentEnroll = ({ instructorId }) => {
     }
     try {
       setAssigning(true);
-      const res = await axios.post(
-        "http://localhost:5000/api/assign-students-group",
-        {
-          instructor_id: instructorId,
-          course: selectedCourse,
-          section: selectedSection,
-          year: selectedYear,
-        }
-      );
+     const res = await api.post("/api/assign-students-group", {
+        instructor_id: instructorId,
+        course: selectedCourse,
+        section: selectedSection,
+        year: selectedYear,
+      });
 
       if (res.status === 201) {
         toast.success("Students assigned successfully!");
@@ -160,15 +155,12 @@ const ManageStudentEnroll = ({ instructorId }) => {
 
     try {
       setAssigning(true);
-      const res = await axios.post(
-        "http://localhost:5000/api/unassign-students-group",
-        {
-          instructor_id: instructorId,
-          course,
-          section,
-          year,
-        }
-      );
+      const res = await api.post("/api/unassign-students-group", {
+        instructor_id: instructorId,
+        course,
+        section,
+        year,
+      });
 
       if (res.status === 200) {
         toast.success("Students unassigned successfully!");
