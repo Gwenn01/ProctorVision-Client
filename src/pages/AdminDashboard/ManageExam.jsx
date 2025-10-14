@@ -14,6 +14,7 @@ import axios from "axios";
 import { FaChalkboardTeacher, FaEdit, FaTrash, FaSearch } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import api from "../../api"
 
 const ManageExam = () => {
   const [instructors, setInstructors] = useState([]);
@@ -46,7 +47,7 @@ const ManageExam = () => {
 
   const fetchInstructors = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/instructors");
+     const res = await api.get("/api/instructors");
       setInstructors(res.data);
       setFilteredInstructors(res.data);
     } catch (err) {
@@ -61,9 +62,7 @@ const ManageExam = () => {
     setLoadingExams(true);
 
     try {
-      const res = await axios.get(
-        `http://localhost:5000/api/exams/instructor/${instructorId}`
-      );
+     const res = await api.get(`/api/exams/instructor/${instructorId}`);
       setExams(res.data);
       console.log(res.data);
     } catch (err) {
@@ -76,7 +75,7 @@ const ManageExam = () => {
   const handleDelete = async (examId) => {
     if (window.confirm("Are you sure you want to delete this exam?")) {
       try {
-        await axios.delete(`http://localhost:5000/api/exams/${examId}`);
+        await api.delete(`/api/exams/${examId}`);
         setExams((prev) => prev.filter((exam) => exam.id !== examId));
         toast.success("Exam deleted successfully");
       } catch (err) {
@@ -118,18 +117,11 @@ const ManageExam = () => {
     console.log("Submitting update:", updatedData);
 
     try {
-      await axios.put(
-        `http://localhost:5000/api/exams/${editExam.id}`,
-        updatedData
-      );
-      toast.success("Exam updated successfully!");
-      window.location.reload();
+    await api.put(`/api/exams/${editExam.id}`, updatedData);
       setEditModal(false);
-
-      const res = await axios.get(
-        `http://localhost:5000/api/exams/instructor/${selectedInstructor}`
-      );
+      const res = await api.get(`/api/exams/instructor/${selectedInstructor}`);
       setExams(res.data);
+      toast.success("Exam updated successfully!");
     } catch (err) {
       console.error("Update failed", err);
       toast.error("Failed to update exam.");

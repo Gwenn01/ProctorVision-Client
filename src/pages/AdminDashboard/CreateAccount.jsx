@@ -29,6 +29,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import * as XLSX from "xlsx";
 import { sendVerificationEmail } from "./utils/sendEamail";
+import api from "../../api"
 
 const CreateAccount = () => {
   const [userType, setUserType] = useState(null);
@@ -76,79 +77,84 @@ const CreateAccount = () => {
     reader.readAsBinaryString(file);
   };
 
-  const handleExcelSubmit = async () => {
-    setLoading(true);
+ const handleExcelSubmit = async () => {
+  setLoading(true);
 
-    if (
-      !excelMeta.course ||
-      !excelMeta.year ||
-      !excelMeta.section ||
-      !excelMeta.status
-    ) {
-      toast.error("Please select all meta fields for Excel import.");
-      setLoading(false);
-      return;
-    }
+  // Basic validations
+  if (!excelMeta?.course || !excelMeta?.year || !excelMeta?.section || !excelMeta?.status) {
+    toast.error("Please select all meta fields for Excel import.");
+    setLoading(false);
+    return;
+  }
 
-    if (excelData.length === 0) {
-      toast.error("No Excel data to submit.");
-      setLoading(false);
-      return;
-    }
+  if (!excelData || excelData.length === 0) {
+    toast.error("No Excel data to submit.");
+    setLoading(false);
+    return;
+  }
 
-    try {
-      const response = await fetch(
-        "http://localhost:5000/api/bulk_create_students",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ students: excelData, meta: excelMeta }),
+  try {
+    // Create students in bulk
+    const { data: result } = await api.post("/api/bulk_create_students", {
+      students: excelData,
+      meta: excelMeta,
+    });
+
+    // Success toast (prefer backend count if available)
+    const createdCount = result?.created_students?.length ?? excelData.length;
+    toast.success(`${createdCount} students imported successfully!`);
+
+    // Build base URL from your axios instance (no trailing slash)
+    const API_BASE = (api.defaults.baseURL || "").replace(/\/+$/, "");
+
+    // Send verification email per created student (if backend returns them)
+    if (Array.isArray(result?.created_students)) {
+      for (const student of result.created_students) {
+        const verifyLink = `${API_BASE}/api/verify?token=${encodeURIComponent(
+          student.verify_token
+        )}`;
+
+        const emailSent = await sendVerificationEmail({
+          to_email: student.email,
+          to_name: student.name,
+          username: student.username,
+          password: student.password,
+          link: verifyLink,
+        });
+
+        if (emailSent) {
+          toast.success(`Verification email sent to ${student.email}!`);
+        } else {
+          toast.error(
+            `Account created, but email failed to send for ${student.email}.`
+          );
         }
-      );
-
-      const result = await response.json();
-
-      if (response.ok) {
-        toast.success(`${excelData.length} students imported successfully!`);
-
-        // Loop through each student to send a verification email
-        for (const student of result.created_students || []) {
-          const verifyLink = `http://localhost:5000/api/verify?token=${student.verify_token}`;
-
-          const emailSent = await sendVerificationEmail({
-            to_email: student.email,
-            to_name: student.name,
-            username: student.username,
-            password: student.password,
-            link: verifyLink,
-          });
-          if (emailSent) {
-            toast.success("Verification email sent!");
-          } else {
-            toast.error("Account created, but email failed to send.");
-          }
-
-          if (!emailSent) {
-            toast.warn(`Email failed for ${student.email}`);
-          }
-        }
-
-        setExcelData([]);
-      } else {
-        toast.error(result.error || "Failed to import students.");
       }
-    } catch (err) {
-      toast.error("Server error during import.");
-      console.error(err);
-    } finally {
-      setLoading(false);
     }
-  };
+
+    // Clear local state after success
+    setExcelData([]);
+    if (typeof setExcelMeta === "function") {
+      setExcelMeta({});
+    }
+  } catch (err) {
+    const msg =
+      err?.response?.data?.error ||
+      err?.response?.data?.message ||
+      err?.message ||
+      "Server error during import.";
+    toast.error(msg);
+    console.error("Bulk import error:", err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
+    // 🧩 Basic validation
     if (
       formData.name === "" ||
       formData.username === "" ||
@@ -165,67 +171,72 @@ const CreateAccount = () => {
       return;
     }
 
+    //  Password validation
     if (!/^(?=.*\d).{8,}$/.test(formData.password)) {
-      toast.error(
-        "Password must be at least 8 characters and contain a number."
-      );
+      toast.error("Password must be at least 8 characters and contain a number.");
       setLoading(false);
       return;
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/create_account", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, userType }),
+      //  Axios automatically converts JS object → JSON and parses response
+      const response = await api.post("/api/create_account", {
+        ...formData,
+        userType,
       });
 
-      const result = await response.json();
+      // Axios gives you data directly
+      const result = response.data;
 
-      if (response.ok) {
-        toast.success(result.message);
+      toast.success(result.message || "Account created successfully!");
 
-        //  Generate frontend-side email verification link
-        const verifyLink = `http://localhost:5000/api/verify?token=${result.token}`;
+      // ✅ Build verify link from your API base URL
+      const API_BASE = (api.defaults.baseURL || "").replace(/\/+$/, "");
+      const verifyLink = `${API_BASE}/api/verify?token=${encodeURIComponent(
+        result.token
+      )}`;
 
-        //  Send email via EmailJS
-        const emailSent = await sendVerificationEmail({
-          to_email: formData.email,
-          to_name: formData.name,
-          username: formData.username,
-          password: formData.password,
-          link: verifyLink,
-        });
+      // ✅ Send email using EmailJS helper
+      const emailSent = await sendVerificationEmail({
+        to_email: formData.email,
+        to_name: formData.name,
+        username: formData.username,
+        password: formData.password,
+        link: verifyLink,
+      });
 
-        if (emailSent) {
-          toast.success("Verification email sent!");
-        } else {
-          toast.error("Account created, but email failed to send.");
-        }
-
-        // Reset form
-        setFormData({
-          name: "",
-          username: "",
-          email: "",
-          password: "",
-          course: "",
-          section: "",
-          year: "",
-          status: "",
-        });
-        setUserType(null);
-        setStudentFormMode(null);
+      if (emailSent) {
+        toast.success("Verification email sent!");
       } else {
-        toast.error(result.error || "Failed to create account.");
+        toast.error("Account created, but email failed to send.");
       }
+
+      // ✅ Reset form after success
+      setFormData({
+        name: "",
+        username: "",
+        email: "",
+        password: "",
+        course: "",
+        section: "",
+        year: "",
+        status: "",
+      });
+      setUserType(null);
+      setStudentFormMode(null);
     } catch (err) {
-      toast.error("Server error: Failed to connect.");
+      //  Axios errors come in err.response.data
+      if (err.response && err.response.data) {
+        toast.error(err.response.data.error || "Failed to create account.");
+      } else {
+        toast.error("Server error: Failed to connect.");
+      }
       console.error("Error:", err);
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <Container className="py-5 d-flex justify-content-center">

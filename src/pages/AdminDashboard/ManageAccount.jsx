@@ -28,6 +28,7 @@ import {
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { FaSearch } from "react-icons/fa";
+import api from "../../api"
 
 const ManageAccount = () => {
   const [users, setUsers] = useState([]);
@@ -48,9 +49,9 @@ const ManageAccount = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(
-        `http://localhost:5000/api/users?role=${filterRole}`
-      );
+     const res = await api.get(`/api/users`, {
+      params: { role: filterRole },
+    });
       let sorted = res.data;
 
       if (filterRole === "Student") {
@@ -90,10 +91,7 @@ const ManageAccount = () => {
   const handleSaveChanges = async () => {
     setLoading(true);
     try {
-      await axios.put(
-        `http://localhost:5000/api/users/${selectedUser.id}`,
-        selectedUser
-      );
+     await api.put(`/api/users/${selectedUser.id}`, selectedUser);
       fetchUsers();
       setShowModal(false);
       toast.success("User updated successfully!");
@@ -108,7 +106,7 @@ const ManageAccount = () => {
     setLoading(true);
     if (window.confirm("Are you sure you want to delete this user?")) {
       try {
-        await axios.delete(`http://localhost:5000/api/users/${id}`);
+       await api.delete(`/api/users/${id}`);
         fetchUsers();
         toast.success("User deleted successfully!");
       } catch (err) {

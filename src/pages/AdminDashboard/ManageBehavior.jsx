@@ -15,6 +15,7 @@ import axios from "axios";
 import { FaUser, FaEye, FaSearch } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import api from "../../api"
 
 const ManageBehavior = () => {
   const [students, setStudents] = useState([]);
@@ -44,9 +45,9 @@ const ManageBehavior = () => {
 
   const fetchStudents = async () => {
     try {
-      const res = await axios.get(
-        "http://localhost:5000/api/users?role=Student"
-      );
+        const res = await api.get("/api/users", {
+      params: { role: "Student" },
+    });
       setStudents(res.data);
     } catch (err) {
       console.error("Failed to fetch students", err);
@@ -80,9 +81,7 @@ const ManageBehavior = () => {
     setLoading(true);
 
     try {
-      const res = await axios.get(
-        `http://localhost:5000/api/student-exams/${student.id}`
-      );
+    const res = await api.get(`/api/student-exams/${student.id}`);
       setStudentExams(res.data);
     } catch (err) {
       console.error("Failed to fetch student exams", err);
@@ -97,9 +96,7 @@ const ManageBehavior = () => {
     setBehaviorLogs([]);
     setLoading(true);
     try {
-      const res = await axios.get(
-        `http://localhost:5000/api/behavior-images/${exam.id}/${selectedStudent.id}`
-      );
+    const res = await api.get(`/api/behavior-images/${exam.id}/${selectedStudent.id}`);
       setBehaviorLogs(res.data);
     } catch (err) {
       console.error("Failed to fetch behavior logs", err);
