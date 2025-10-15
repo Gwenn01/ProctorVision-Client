@@ -4,6 +4,7 @@ import { useNavigate, Link, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import logo from "../assets/prmsu-logo.png";
 import axios from "axios";
+import api from "../api";
 
 const Sidebar = ({ role }) => {
   const navigate = useNavigate();
@@ -18,8 +19,8 @@ const Sidebar = ({ role }) => {
 
     if (user?.role === "Student") {
       try {
-        await axios.post(
-          "http://localhost:5000/api/logout",
+        await api.post(
+          "/api/logout",
           { student_id: user.id },
           {
             headers: {
