@@ -4,7 +4,7 @@ import axios from "axios";
 const apiAI = axios.create({
   baseURL:
     process.env.REACT_APP_AI_BASE_URL ||
-    "https://gwen01-proctorvision-ai.hf.space", // fallback if .env not loaded
+    "https://gwen01-proctorvision-ai.hf.space/api", // ✅ include /api prefix
   headers: {
     "Content-Type": "application/json",
   },
