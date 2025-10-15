@@ -19,6 +19,7 @@ import {
   stopProctoringWebRTC,
 } from "../../utils/proctorRTC";
 import api from "../../api";
+import apiAI from "../../apiAI";
 
 const API_BASE = "http://127.0.0.1:5000";
 
@@ -365,10 +366,10 @@ const TakeExam = () => {
 
     const t = setInterval(async () => {
       try {
-        const { data } = await axios.get(
-          `${API_BASE}/api/proctor/last_warning`,
-          { params: { student_id: studentId, exam_id: selectedExam.id } }
-        );
+        // These two stay on your main backend (Railway)
+        const { data } = await apiAI.get("/api/proctor/last_warning", {
+          params: { student_id: studentId, exam_id: selectedExam.id },
+        });
 
         const warn = data?.warning || "Looking Forward";
 
@@ -417,10 +418,10 @@ const TakeExam = () => {
 
     const t = setInterval(async () => {
       try {
-        const { data } = await axios.get(
-          `${API_BASE}/api/proctor/last_capture`,
-          { params: { student_id: studentId, exam_id: selectedExam.id } }
-        );
+        // Fetch last capture (from AI backend)
+        const { data } = await apiAI.get("/api/proctor/last_capture", {
+          params: { student_id: studentId, exam_id: selectedExam.id },
+        });
         if (data?.at && data.at > lastCaptureAt) {
           setLastCaptureAt(data.at);
           if (!noFaceActiveRef.current) {
@@ -495,7 +496,8 @@ const TakeExam = () => {
       stopProctoringWebRTC();
       stopNoFaceAlarm();
 
-      await axios.post(`${API_BASE}/api/classify_behavior_logs`, {
+      // This one goes to your AI backend (Hugging Face)
+      await apiAI.post("/api/classify_behavior_logs", {
         user_id: studentId,
         exam_id: selectedExam.id,
       });
