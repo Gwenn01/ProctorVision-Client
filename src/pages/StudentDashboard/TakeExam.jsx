@@ -343,7 +343,7 @@ const TakeExam = () => {
 
       try {
         await startProctoringWebRTC(
-          API_BASE,
+          apiAI.defaults.baseURL, // 👈 the actual URL string, e.g. "https://gwen01-proctorvision-ai.hf.space"
           studentId,
           selectedExam.id,
           videoPreviewRef.current
