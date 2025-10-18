@@ -2,7 +2,7 @@ let pc = null;
 let localStream = null;
 
 export const ICE_SERVERS = [
-  { urls: "stun:stun.l.google.com:19302" }, // TURN not needed for localhost
+  { urls: "stun:stun.l.google.com:19302" }, // TURN not ne
 ];
 
 // Helper: wait until ICE gathering completes
