@@ -5,6 +5,7 @@ export const ICE_SERVERS = [
   { urls: "stun:stun.l.google.com:19302" }, // TURN not needed for localhost
 ];
 
+// Helper: wait until ICE gathering completes
 function waitForIceGatheringComplete(pc) {
   if (pc.iceGatheringState === "complete") return Promise.resolve();
   return new Promise((resolve) => {
@@ -18,6 +19,13 @@ function waitForIceGatheringComplete(pc) {
   });
 }
 
+/**
+ * Start the WebRTC proctoring session
+ * @param {string} apiBase - Base URL of the AI backend (e.g. https://gwen01-proctorvision-ai.hf.space)
+ * @param {string|number} studentId - Current student ID
+ * @param {string|number} examId - Current exam ID
+ * @param {HTMLVideoElement} previewVideoEl - Video element for local preview
+ */
 export async function startProctoringWebRTC(
   apiBase,
   studentId,
@@ -25,28 +33,33 @@ export async function startProctoringWebRTC(
   previewVideoEl
 ) {
   console.log("[RTC] requesting camera…");
-  // 1) Camera
+
+  // 1) Request camera access
   localStream = await navigator.mediaDevices.getUserMedia({
     video: { width: 1280, height: 720, frameRate: { ideal: 30 } },
     audio: false,
   });
+
   if (previewVideoEl) {
     previewVideoEl.srcObject = localStream;
     try {
       await previewVideoEl.play();
-    } catch (e) {}
+    } catch (e) {
+      console.warn("Preview video playback issue:", e);
+    }
   }
 
-  // 2) Peer connection
+  // 2) Create peer connection
   pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
   pc.oniceconnectionstatechange = () =>
     console.log("ICE state:", pc.iceConnectionState);
   pc.onconnectionstatechange = () =>
     console.log("RTC state:", pc.connectionState);
 
+  // Add video tracks to the peer connection
   localStream.getTracks().forEach((t) => pc.addTrack(t, localStream));
 
-  // 3) Offer with full ICE
+  // 3) Create offer and gather ICE candidates
   const offer = await pc.createOffer({
     offerToReceiveVideo: false,
     offerToReceiveAudio: false,
@@ -54,12 +67,13 @@ export async function startProctoringWebRTC(
   await pc.setLocalDescription(offer);
   await waitForIceGatheringComplete(pc);
 
-  const url = `${apiBase}/api/webrtc/offer`;
+  // ✅ FIXED: Removed /api prefix
+  const url = `${apiBase}/webrtc/offer`;
   console.log("[RTC] POST", url);
+
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    // credentials: "include", // <- leave off while testing CORS
     body: JSON.stringify({
       sdp: pc.localDescription.sdp,
       type: pc.localDescription.type,
@@ -74,11 +88,15 @@ export async function startProctoringWebRTC(
     throw new Error(`Offer failed: ${res.status} ${text}`);
   }
 
+  // 4) Set remote description (answer from backend)
   const answer = await res.json();
   await pc.setRemoteDescription(answer);
   console.log("[RTC] remote description set; waiting for connected…");
 }
 
+/**
+ * Stop the WebRTC session and release camera resources
+ */
 export function stopProctoringWebRTC() {
   try {
     if (pc) {
@@ -89,7 +107,9 @@ export function stopProctoringWebRTC() {
       });
       pc.close();
     }
-  } catch {}
+  } catch (err) {
+    console.warn("Error closing peer connection:", err);
+  }
   pc = null;
 
   if (localStream) {
