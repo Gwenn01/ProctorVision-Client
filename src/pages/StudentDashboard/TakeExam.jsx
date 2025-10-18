@@ -367,7 +367,7 @@ const TakeExam = () => {
     const t = setInterval(async () => {
       try {
         // These two stay on your main backend (Railway)
-        const { data } = await apiAI.get("api/proctor/last_warning", {
+        const { data } = await apiAI.get("proctor/last_warning", {
           params: { student_id: studentId, exam_id: selectedExam.id },
         });
 
@@ -419,7 +419,7 @@ const TakeExam = () => {
     const t = setInterval(async () => {
       try {
         // Fetch last capture (from AI backend)
-        const { data } = await apiAI.get("api/proctor/last_capture", {
+        const { data } = await apiAI.get("proctor/last_capture", {
           params: { student_id: studentId, exam_id: selectedExam.id },
         });
         if (data?.at && data.at > lastCaptureAt) {

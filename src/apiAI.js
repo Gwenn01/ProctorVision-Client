@@ -2,12 +2,8 @@ import axios from "axios";
 
 // Hugging Face AI backend
 const apiAI = axios.create({
-  baseURL:
-    process.env.REACT_APP_AI_BASE_URL ||
-    "https://gwen01-proctorvision-ai.hf.space/api", // ✅ include /api prefix
-  headers: {
-    "Content-Type": "application/json",
-  },
+  baseURL: process.env.REACT_APP_AI_BASE_URL,
+  headers: { "Content-Type": "application/json" },
 });
 
 apiAI.interceptors.request.use((config) => {
