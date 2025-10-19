@@ -1,14 +1,31 @@
+import * as mpFaceMesh from "@mediapipe/face_mesh";
+import { Camera } from "@mediapipe/camera_utils";
+
 let pc = null;
 let localStream = null;
+let faceMesh = null;
+let camera = null;
 
-// ✅ Use both STUN and TURN (TURN optional but improves reliability)
-export const ICE_SERVERS = [
-  { urls: "stun:stun.l.google.com:19302" },
-  // You can add your TURN server here if you have one:
-  // { urls: "turn:relay1.expressturn.com:3478", username: "user", credential: "password" },
-];
+/**
+ * Dynamically fetch TURN servers from backend
+ */
+async function fetchIceServers(apiBase) {
+  try {
+    const res = await fetch(`${apiBase}/get-turn`);
+    const data = await res.json();
+    if (data?.v?.iceServers?.length) {
+      console.log("[RTC] Using dynamic ICE servers from backend.");
+      return data.v.iceServers;
+    }
+  } catch (err) {
+    console.warn("[RTC] Failed to fetch TURN servers:", err);
+  }
+  return [{ urls: "stun:stun.l.google.com:19302" }];
+}
 
-// Helper: wait until ICE gathering completes
+/**
+ * Helper: wait until ICE gathering completes
+ */
 function waitForIceGatheringComplete(pc) {
   if (pc.iceGatheringState === "complete") return Promise.resolve();
   return new Promise((resolve) => {
@@ -24,10 +41,6 @@ function waitForIceGatheringComplete(pc) {
 
 /**
  * Start the WebRTC proctoring session
- * @param {string} apiBase - Base URL of the AI backend
- * @param {string|number} studentId - Current student ID
- * @param {string|number} examId - Current exam ID
- * @param {HTMLVideoElement} previewVideoEl - Video element for local preview
  */
 export async function startProctoringWebRTC(
   apiBase,
@@ -37,129 +50,125 @@ export async function startProctoringWebRTC(
 ) {
   console.log("[RTC] Requesting camera access…");
 
-  try {
-    // 1️⃣ Get user camera stream
-    localStream = await navigator.mediaDevices.getUserMedia({
-      video: { width: 1280, height: 720, frameRate: { ideal: 30 } },
-      audio: false,
-    });
-  } catch (err) {
-    console.error("[RTC] Failed to access camera:", err);
-    throw err;
-  }
+  // 1️⃣ Get camera
+  localStream = await navigator.mediaDevices.getUserMedia({
+    video: { width: 1280, height: 720, frameRate: { ideal: 30 } },
+    audio: false,
+  });
 
-  if (previewVideoEl) {
-    previewVideoEl.srcObject = localStream;
-    try {
-      await previewVideoEl.play();
-      console.log("[RTC] Local preview started.");
-    } catch (e) {
-      console.warn("[RTC] Preview video playback issue:", e);
-    }
-  }
+  previewVideoEl.srcObject = localStream;
+  await previewVideoEl.play();
+  console.log("[RTC] Local preview started.");
 
-  // 2️⃣ Create PeerConnection
-  pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+  // 2️⃣ Get ICE servers dynamically
+  const iceServers = await fetchIceServers(apiBase);
+
+  // 3️⃣ Create PeerConnection
+  pc = new RTCPeerConnection({ iceServers });
   console.log("[RTC] PeerConnection created.");
 
   pc.oniceconnectionstatechange = () => {
     console.log("ICE state:", pc.iceConnectionState);
     if (pc.iceConnectionState === "failed") {
-      console.error("[RTC] ICE connection failed. Attempting restart...");
+      console.warn("[RTC] ICE failed, restarting...");
       try {
         pc.restartIce();
-      } catch (e) {
-        console.warn("[RTC] restartIce not supported in this browser.");
-      }
+      } catch {}
     }
   };
 
   pc.onconnectionstatechange = () => {
     console.log("RTC state:", pc.connectionState);
-    if (pc.connectionState === "failed") {
-      console.warn(
-        "[RTC] Peer connection failed. Check network or TURN config."
-      );
-    } else if (pc.connectionState === "connected") {
-      console.log("[RTC] Peer connection established ✅");
-    }
+    if (pc.connectionState === "connected") console.log("✅ WebRTC connected.");
   };
 
-  pc.onicegatheringstatechange = () => {
-    console.log("[RTC] ICE gathering:", pc.iceGatheringState);
-  };
+  // 4️⃣ Add tracks
+  localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
 
-  // 3️⃣ Add video tracks
-  localStream.getTracks().forEach((track) => {
-    pc.addTrack(track, localStream);
-    console.log("[RTC] Added track:", track.kind);
-  });
-
-  // 4️⃣ Create offer
-  const offer = await pc.createOffer({
-    offerToReceiveVideo: false,
-    offerToReceiveAudio: false,
-  });
+  // 5️⃣ Create and send offer
+  const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
   await waitForIceGatheringComplete(pc);
 
-  console.log("[RTC] Offer created and local description set.");
+  const response = await fetch(`${apiBase}/webrtc/offer`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sdp: pc.localDescription.sdp,
+      type: pc.localDescription.type,
+      student_id: String(studentId),
+      exam_id: String(examId),
+    }),
+  });
 
-  // 5️⃣ Send offer to Flask WebRTC backend
-  const url = `${apiBase}/webrtc/offer`;
-  console.log("[RTC] POST", url);
-
-  let response;
-  try {
-    response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        sdp: pc.localDescription.sdp,
-        type: pc.localDescription.type,
-        student_id: String(studentId),
-        exam_id: String(examId),
-      }),
-    });
-  } catch (err) {
-    console.error("[RTC] Network error while sending offer:", err);
-    throw err;
-  }
-
-  if (!response.ok) {
-    const text = await response.text();
-    console.error("[RTC] /webrtc/offer failed", response.status, text);
-    throw new Error(`Offer failed: ${response.status} ${text}`);
-  }
-
-  // 6️⃣ Set answer from backend
+  if (!response.ok) throw new Error("Offer failed");
   const answer = await response.json();
   await pc.setRemoteDescription(answer);
-  console.log("[RTC] Remote description set; waiting for connection…");
+  console.log("[RTC] Remote description set.");
+
+  // 6️⃣ OPTIONAL: Initialize FaceMesh detection (local feedback)
+  setupFaceMesh(previewVideoEl);
 }
 
 /**
- * Stop the WebRTC session and release resources
+ * Stop WebRTC session
  */
 export function stopProctoringWebRTC() {
-  try {
-    if (pc) {
-      pc.getSenders().forEach((sender) => {
-        try {
-          if (sender.track) sender.track.stop();
-        } catch {}
-      });
-      pc.close();
-      console.log("[RTC] PeerConnection closed.");
-    }
-  } catch (err) {
-    console.warn("[RTC] Error closing peer connection:", err);
-  }
-  pc = null;
+  if (camera) camera.stop();
+  if (faceMesh) faceMesh.close();
 
+  if (pc) {
+    pc.getSenders().forEach((s) => s.track?.stop());
+    pc.close();
+    console.log("[RTC] PeerConnection closed.");
+  }
   if (localStream) {
     localStream.getTracks().forEach((t) => t.stop());
-    localStream = null;
     console.log("[RTC] Camera stopped.");
   }
+  pc = null;
+  localStream = null;
+}
+
+/**
+ * 🔍 Optional — Use MediaPipe FaceMesh for head movement detection
+ */
+function setupFaceMesh(videoEl) {
+  faceMesh = new mpFaceMesh.FaceMesh({
+    locateFile: (file) =>
+      `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
+  });
+
+  faceMesh.setOptions({
+    maxNumFaces: 1,
+    refineLandmarks: true,
+    minDetectionConfidence: 0.6,
+    minTrackingConfidence: 0.6,
+  });
+
+  faceMesh.onResults((results) => {
+    if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+      const landmarks = results.multiFaceLandmarks[0];
+
+      // Simple horizontal head tilt check
+      const leftEye = landmarks[33]; // left eye outer corner
+      const rightEye = landmarks[263]; // right eye outer corner
+
+      const diffX = leftEye.x - rightEye.x;
+
+      if (diffX > 0.09) console.log("👀 Looking LEFT");
+      else if (diffX < -0.09) console.log("👀 Looking RIGHT");
+      else console.log("👀 Facing forward");
+    }
+  });
+
+  camera = new Camera(videoEl, {
+    onFrame: async () => {
+      await faceMesh.send({ image: videoEl });
+    },
+    width: 640,
+    height: 480,
+  });
+
+  camera.start();
 }
