@@ -19,6 +19,7 @@ import {
 } from "../../utils/proctorRTC";
 import api from "../../api";
 import apiAI from "../../apiAI";
+import apiWebRTC from "../../apiWebRTC":
 
 const TakeExam = () => {
   const [exams, setExams] = useState([]);
@@ -345,7 +346,7 @@ const TakeExam = () => {
 
       try {
         await startProctoringWebRTC(
-          apiAI.defaults.baseURL, // 👈 the actual URL string, e.g. "https://gwen01-proctorvision-ai.hf.space"
+          apiWebRTC.defaults.baseURL,
           studentId,
           selectedExam.id,
           videoPreviewRef.current
@@ -369,7 +370,7 @@ const TakeExam = () => {
     const t = setInterval(async () => {
       try {
         // These two stay on your main backend (Railway)
-        const { data } = await apiAI.get("/proctor/last_warning", {
+        const { data } = await apiWebRTC.get("/proctor/last_warning", {
           params: { student_id: studentId, exam_id: selectedExam.id },
         });
 
@@ -421,7 +422,7 @@ const TakeExam = () => {
     const t = setInterval(async () => {
       try {
         // Fetch last capture (from AI backend)
-        const { data } = await apiAI.get("/proctor/last_capture", {
+        const { data } = await apiWebRTC.get("/proctor/last_capture", {
           params: { student_id: studentId, exam_id: selectedExam.id },
         });
         if (data?.at && data.at > lastCaptureAt) {
