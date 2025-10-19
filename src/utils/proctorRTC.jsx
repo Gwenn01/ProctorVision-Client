@@ -1,8 +1,11 @@
 let pc = null;
 let localStream = null;
 
+// ✅ Use both STUN and TURN (TURN optional but improves reliability)
 export const ICE_SERVERS = [
-  { urls: "stun:stun.l.google.com:19302" }, // TURN not ne
+  { urls: "stun:stun.l.google.com:19302" },
+  // You can add your TURN server here if you have one:
+  // { urls: "turn:relay1.expressturn.com:3478", username: "user", credential: "password" },
 ];
 
 // Helper: wait until ICE gathering completes
@@ -21,7 +24,7 @@ function waitForIceGatheringComplete(pc) {
 
 /**
  * Start the WebRTC proctoring session
- * @param {string} apiBase - Base URL of the AI backend (e.g. https://gwen01-proctorvision-ai.hf.space)
+ * @param {string} apiBase - Base URL of the AI backend
  * @param {string|number} studentId - Current student ID
  * @param {string|number} examId - Current exam ID
  * @param {HTMLVideoElement} previewVideoEl - Video element for local preview
@@ -32,34 +35,67 @@ export async function startProctoringWebRTC(
   examId,
   previewVideoEl
 ) {
-  console.log("[RTC] requesting camera…");
+  console.log("[RTC] Requesting camera access…");
 
-  // 1) Request camera access
-  localStream = await navigator.mediaDevices.getUserMedia({
-    video: { width: 1280, height: 720, frameRate: { ideal: 30 } },
-    audio: false,
-  });
+  try {
+    // 1️⃣ Get user camera stream
+    localStream = await navigator.mediaDevices.getUserMedia({
+      video: { width: 1280, height: 720, frameRate: { ideal: 30 } },
+      audio: false,
+    });
+  } catch (err) {
+    console.error("[RTC] Failed to access camera:", err);
+    throw err;
+  }
 
   if (previewVideoEl) {
     previewVideoEl.srcObject = localStream;
     try {
       await previewVideoEl.play();
+      console.log("[RTC] Local preview started.");
     } catch (e) {
-      console.warn("Preview video playback issue:", e);
+      console.warn("[RTC] Preview video playback issue:", e);
     }
   }
 
-  // 2) Create peer connection
+  // 2️⃣ Create PeerConnection
   pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
-  pc.oniceconnectionstatechange = () =>
+  console.log("[RTC] PeerConnection created.");
+
+  pc.oniceconnectionstatechange = () => {
     console.log("ICE state:", pc.iceConnectionState);
-  pc.onconnectionstatechange = () =>
+    if (pc.iceConnectionState === "failed") {
+      console.error("[RTC] ICE connection failed. Attempting restart...");
+      try {
+        pc.restartIce();
+      } catch (e) {
+        console.warn("[RTC] restartIce not supported in this browser.");
+      }
+    }
+  };
+
+  pc.onconnectionstatechange = () => {
     console.log("RTC state:", pc.connectionState);
+    if (pc.connectionState === "failed") {
+      console.warn(
+        "[RTC] Peer connection failed. Check network or TURN config."
+      );
+    } else if (pc.connectionState === "connected") {
+      console.log("[RTC] Peer connection established ✅");
+    }
+  };
 
-  // Add video tracks to the peer connection
-  localStream.getTracks().forEach((t) => pc.addTrack(t, localStream));
+  pc.onicegatheringstatechange = () => {
+    console.log("[RTC] ICE gathering:", pc.iceGatheringState);
+  };
 
-  // 3) Create offer and gather ICE candidates
+  // 3️⃣ Add video tracks
+  localStream.getTracks().forEach((track) => {
+    pc.addTrack(track, localStream);
+    console.log("[RTC] Added track:", track.kind);
+  });
+
+  // 4️⃣ Create offer
   const offer = await pc.createOffer({
     offerToReceiveVideo: false,
     offerToReceiveAudio: false,
@@ -67,53 +103,63 @@ export async function startProctoringWebRTC(
   await pc.setLocalDescription(offer);
   await waitForIceGatheringComplete(pc);
 
-  // ✅ FIXED: Removed /api prefix
+  console.log("[RTC] Offer created and local description set.");
+
+  // 5️⃣ Send offer to Flask WebRTC backend
   const url = `${apiBase}/webrtc/offer`;
   console.log("[RTC] POST", url);
 
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      sdp: pc.localDescription.sdp,
-      type: pc.localDescription.type,
-      student_id: String(studentId),
-      exam_id: String(examId),
-    }),
-  });
-
-  if (!res.ok) {
-    const text = await res.text();
-    console.error("[RTC] /webrtc/offer failed", res.status, text);
-    throw new Error(`Offer failed: ${res.status} ${text}`);
+  let response;
+  try {
+    response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sdp: pc.localDescription.sdp,
+        type: pc.localDescription.type,
+        student_id: String(studentId),
+        exam_id: String(examId),
+      }),
+    });
+  } catch (err) {
+    console.error("[RTC] Network error while sending offer:", err);
+    throw err;
   }
 
-  // 4) Set remote description (answer from backend)
-  const answer = await res.json();
+  if (!response.ok) {
+    const text = await response.text();
+    console.error("[RTC] /webrtc/offer failed", response.status, text);
+    throw new Error(`Offer failed: ${response.status} ${text}`);
+  }
+
+  // 6️⃣ Set answer from backend
+  const answer = await response.json();
   await pc.setRemoteDescription(answer);
-  console.log("[RTC] remote description set; waiting for connected…");
+  console.log("[RTC] Remote description set; waiting for connection…");
 }
 
 /**
- * Stop the WebRTC session and release camera resources
+ * Stop the WebRTC session and release resources
  */
 export function stopProctoringWebRTC() {
   try {
     if (pc) {
-      pc.getSenders().forEach((s) => {
+      pc.getSenders().forEach((sender) => {
         try {
-          s.track && s.track.stop();
+          if (sender.track) sender.track.stop();
         } catch {}
       });
       pc.close();
+      console.log("[RTC] PeerConnection closed.");
     }
   } catch (err) {
-    console.warn("Error closing peer connection:", err);
+    console.warn("[RTC] Error closing peer connection:", err);
   }
   pc = null;
 
   if (localStream) {
     localStream.getTracks().forEach((t) => t.stop());
     localStream = null;
+    console.log("[RTC] Camera stopped.");
   }
 }
