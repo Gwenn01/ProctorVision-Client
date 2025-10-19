@@ -113,21 +113,46 @@ export async function startProctoringWebRTC(
 /**
  * Stop WebRTC session
  */
-export function stopProctoringWebRTC() {
-  if (camera) camera.stop();
-  if (faceMesh) faceMesh.close();
+export async function stopProctoringWebRTC() {
+  try {
+    // 🧠 Safely stop camera if present
+    if (camera && typeof camera.stop === "function") {
+      camera.stop();
+      console.log("[RTC] Camera instance stopped.");
+    }
 
-  if (pc) {
-    pc.getSenders().forEach((s) => s.track?.stop());
-    pc.close();
-    console.log("[RTC] PeerConnection closed.");
+    // 🧩 Safely close MediaPipe FaceMesh
+    if (faceMesh && typeof faceMesh.close === "function") {
+      try {
+        await faceMesh.close();
+        console.log("[RTC] FaceMesh closed safely.");
+      } catch (err) {
+        console.warn("[RTC] FaceMesh close error:", err);
+      }
+    }
+
+    // 🔌 Close PeerConnection
+    if (pc) {
+      pc.getSenders().forEach((s) => {
+        if (s.track) s.track.stop();
+      });
+      pc.close();
+      console.log("[RTC] PeerConnection closed.");
+    }
+
+    // 📷 Stop all media tracks
+    if (localStream) {
+      localStream.getTracks().forEach((t) => t.stop());
+      console.log("[RTC] Local camera tracks stopped.");
+    }
+  } catch (err) {
+    console.error("[RTC] Error during stopProctoringWebRTC:", err);
+  } finally {
+    // 🧹 Cleanup references
+    pc = null;
+    localStream = null;
+    console.log("[RTC] Cleanup completed.");
   }
-  if (localStream) {
-    localStream.getTracks().forEach((t) => t.stop());
-    console.log("[RTC] Camera stopped.");
-  }
-  pc = null;
-  localStream = null;
 }
 
 /**
