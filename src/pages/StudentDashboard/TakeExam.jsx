@@ -500,7 +500,7 @@ const TakeExam = () => {
       stopNoFaceAlarm();
 
       // This one goes to your AI backend (Hugging Face)
-      await apiAI.post("/classify_behavior_logs", {
+      await apiAI.post("/api/classify_behavior_logs", {
         user_id: studentId,
         exam_id: selectedExam.id,
       });
