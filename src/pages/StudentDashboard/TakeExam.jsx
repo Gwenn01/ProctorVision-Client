@@ -19,7 +19,7 @@ import {
 } from "../../utils/proctorRTC";
 import api from "../../api";
 import apiAI from "../../apiAI";
-import apiWebRTC from "../../apiWebRTC":
+import apiWebRTC from "../../apiWebRTC";
 
 const TakeExam = () => {
   const [exams, setExams] = useState([]);
