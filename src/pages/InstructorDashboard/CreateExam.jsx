@@ -390,19 +390,24 @@ const CreateExam = () => {
                 variant="primary"
                 size="lg"
                 className="w-100 py-3 d-flex align-items-center justify-content-center gap-2"
-                onClick={() => setExamType("Exam")}
+                onClick={() => {
+                  setExamType("Exam");
+                  setExamCategory(""); // Let them choose QA or CODING for exams
+                }}
                 disabled={loading}
               >
                 <i className="bi bi-journal-text fs-3"></i>
                 <span className="fw-semibold">Create Exam</span>
               </Button>
-            </Col>
-            <Col xs={12} md={5}>
+
               <Button
                 variant="info"
                 size="lg"
                 className="w-100 py-3 d-flex align-items-center justify-content-center gap-2"
-                onClick={() => setExamType("Activity")}
+                onClick={() => {
+                  setExamType("Activity");
+                  setExamCategory("CODING"); // Automatically force to CODING
+                }}
                 disabled={loading}
               >
                 <i className="bi bi-pencil-square fs-3"></i>
@@ -492,50 +497,53 @@ const CreateExam = () => {
 
             {/* Category Picker */}
             {/* Exam Format Picker */}
-            <Card className="mb-4 border-0 shadow-sm rounded-3">
-              <Card.Body>
-                <div className="d-flex align-items-center justify-content-between mb-2">
-                  <div className="d-flex align-items-center gap-2">
-                    <i className="bi bi-sliders2-vertical fs-5 text-primary"></i>
-                    <h5 className="fw-semibold mb-0">Format</h5>
+            {examType === "Exam" && (
+              <Card className="mb-4 border-0 shadow-sm rounded-3">
+                <Card.Body>
+                  <div className="d-flex align-items-center justify-content-between mb-2">
+                    <div className="d-flex align-items-center gap-2">
+                      <i className="bi bi-sliders2-vertical fs-5 text-primary"></i>
+                      <h5 className="fw-semibold mb-0">Format</h5>
+                    </div>
+                    {examCategory && (
+                      <span className="badge bg-light text-dark border">
+                        Selected:{" "}
+                        {examCategory === "CODING"
+                          ? "Coding / Instructions"
+                          : "QA"}
+                      </span>
+                    )}
                   </div>
-                  {examCategory && (
-                    <span className="badge bg-light text-dark border">
-                      Selected:{" "}
-                      {examCategory === "CODING"
-                        ? "Coding / Instructions"
-                        : "QA"}
-                    </span>
-                  )}
-                </div>
 
-                <Form.Group controlId="examCategory">
-                  <Form.Label className="fw-semibold">Format</Form.Label>
-                  {/* Keep values aligned with backend expectations: "MCQ" | "CODING" */}
-                  <Form.Select
-                    value={examCategory}
-                    onChange={(e) => setExamCategory(e.target.value)}
-                    disabled={loading}
-                    className="w-100"
-                  >
-                    <option value="">— Select format —</option>
-                    <option value="CODING">Coding (Instructions Only)</option>
-                    <option value="QA">QA (Questions & Answers)</option>
-                  </Form.Select>
-                  <div className="form-text mt-2">
-                    {examCategory === "QA" && (
-                      <>You’ll create multiple-choice questions below.</>
-                    )}
-                    {examCategory === "CODING" && (
-                      <>
-                        Provide clear instructions; no QA section will be shown.
-                      </>
-                    )}
-                    {!examCategory && <>Pick a format to continue.</>}
-                  </div>
-                </Form.Group>
-              </Card.Body>
-            </Card>
+                  <Form.Group controlId="examCategory">
+                    <Form.Label className="fw-semibold">Format</Form.Label>
+                    {/* Keep values aligned with backend expectations: "MCQ" | "CODING" */}
+                    <Form.Select
+                      value={examCategory}
+                      onChange={(e) => setExamCategory(e.target.value)}
+                      disabled={loading}
+                      className="w-100"
+                    >
+                      <option value="">— Select format —</option>
+                      <option value="CODING">Coding (Instructions Only)</option>
+                      <option value="QA">QA (Questions & Answers)</option>
+                    </Form.Select>
+                    <div className="form-text mt-2">
+                      {examCategory === "QA" && (
+                        <>You’ll create multiple-choice questions below.</>
+                      )}
+                      {examCategory === "CODING" && (
+                        <>
+                          Provide clear instructions; no QA section will be
+                          shown.
+                        </>
+                      )}
+                      {!examCategory && <>Pick a format to continue.</>}
+                    </div>
+                  </Form.Group>
+                </Card.Body>
+              </Card>
+            )}
 
             {/* Instructions Section — show ONLY for CODING */}
             {examCategory === "CODING" && (
