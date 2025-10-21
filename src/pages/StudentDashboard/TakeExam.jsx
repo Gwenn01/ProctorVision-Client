@@ -481,122 +481,139 @@ const TakeExam = () => {
     setStudentAnswers((prev) => ({ ...prev, [qId]: optionId }));
   };
 
-  // Submit exam
-  const handleSubmitExam = useCallback(
-    async (forceSubmit = false) => {
-      if (isSubmitting) return;
-      setDetectionCount(0);
-      const userData = JSON.parse(localStorage.getItem("userData"));
-      const studentId = userData?.id;
+ // Submit exam
+const handleSubmitExam = useCallback(
+  async (forceSubmit = false) => {
+    if (isSubmitting) return;
 
-      if (!studentId || !selectedExam?.id) {
-        toast.error("Missing exam or student information.");
-        return;
-      }
+    setDetectionCount(0);
+    const userData = JSON.parse(localStorage.getItem("userData"));
+    const studentId = userData?.id;
 
-      // ⚡ 1️⃣ Validate first before loading
-      if (!forceSubmit) {
-        if (selectedExam.exam_category?.toLowerCase() === "coding") {
-          if (!code || code.trim() === "") {
-            Swal.fire({
-              icon: "warning",
-              title: "Missing Code!",
-              text: "Please write your code before submitting.",
-              confirmButtonColor: "#3085d6",
-            });
-            return;
-          }
+    if (!studentId || !selectedExam?.id) {
+      toast.error("Missing exam or student information.");
+      return;
+    }
 
-          if (!language) {
-            Swal.fire({
-              icon: "info",
-              title: "Select Language",
-              text: "Please select a programming language before submitting.",
-              confirmButtonColor: "#3085d6",
-            });
-            return;
-          }
-        } else {
-          if (!studentAnswers || Object.keys(studentAnswers).length === 0) {
-            Swal.fire({
-              icon: "warning",
-              title: "Unanswered Questions",
-              text: "Please answer all questions before submitting your exam.",
-              confirmButtonColor: "#d33",
-            });
-            return;
-          }
-        }
-      }
-
-      // 🕓 2️⃣ Start loading after validation passes
-      setIsSubmitting(true);
-
-      try {
-        // ✅ Stop camera and AI detection first
-        stopProctoringWebRTC();
-        stopNoFaceAlarm();
-
-        // ✅ Update submission status
-        await api.post("/api/update_exam_status_submit", {
-          student_id: studentId,
-        });
-
-        // 🧠 3️⃣ Submit the actual exam (based on type)
-        let submitData;
-        if (selectedExam.exam_category?.toLowerCase() === "coding") {
-          submitData = await api.post("/api/submit_exam", {
-            user_id: studentId,
-            exam_id: selectedExam.id,
-            language,
-            code,
-            output,
+    // ⚡ 1️⃣ Manual validation (skip if auto-submit)
+    if (!forceSubmit) {
+      if (selectedExam.exam_category?.toLowerCase() === "coding") {
+        if (!code || code.trim() === "") {
+          Swal.fire({
+            icon: "warning",
+            title: "Missing Code!",
+            text: "Please write your code before submitting.",
+            confirmButtonColor: "#3085d6",
           });
-
-          setExamResult(submitData.data);
-          setShowResultModal(true);
-          toast.success("Coding exam submitted successfully!");
-        } else {
-          submitData = await api.post("/api/submit_exam", {
-            user_id: studentId,
-            exam_id: selectedExam.id,
-            answers: studentAnswers,
-          });
-
-          setExamResult(submitData.data);
-          setShowResultModal(true);
-          toast.success("Exam submitted successfully!");
+          return;
         }
 
-        // 🧩 4️⃣ Classify behavior after submission
-        await apiAI.post("/api/classify_behavior_logs", {
+        if (!language) {
+          Swal.fire({
+            icon: "info",
+            title: "Select Language",
+            text: "Please select a programming language before submitting.",
+            confirmButtonColor: "#3085d6",
+          });
+          return;
+        }
+      } else {
+        if (!studentAnswers || Object.keys(studentAnswers).length === 0) {
+          Swal.fire({
+            icon: "warning",
+            title: "Unanswered Questions",
+            text: "Please answer all questions before submitting your exam.",
+            confirmButtonColor: "#d33",
+          });
+          return;
+        }
+      }
+    }
+
+    // 🕓 2️⃣ Start submission
+    setIsSubmitting(true);
+
+    try {
+      // ✅ Stop camera and AI detection before submission
+      stopProctoringWebRTC();
+      stopNoFaceAlarm();
+
+      // ✅ Update submission status in DB
+      await api.post("/api/update_exam_status_submit", {
+        student_id: studentId,
+      });
+
+      // 🧠 3️⃣ Submit the actual exam (based on type)
+      const category = selectedExam.exam_category?.toLowerCase();
+      let submitData;
+
+      if (category === "coding") {
+        // handle safe defaults for auto-submission
+        const safeLanguage = forceSubmit ? language || "none" : language;
+        const safeCode = forceSubmit
+          ? code?.trim() || "// Auto-submitted — no code provided."
+          : code;
+        const safeOutput = output || "";
+
+        submitData = await api.post("/api/submit_exam", {
           user_id: studentId,
           exam_id: selectedExam.id,
+          language: safeLanguage,
+          code: safeCode,
+          output: safeOutput,
         });
 
-        await fetchBehaviorLogs();
-        setShowCapturedModal(true);
-        toast.success("Behavior classification completed!");
-      } catch (error) {
-        console.error("Exam submission error:", error);
-        toast.error("Something went wrong while submitting the exam.");
+        setExamResult(submitData.data);
+        setShowResultModal(true);
+        toast.success("Coding exam submitted successfully!");
+      } else {
+        // handle safe defaults for auto-submission
+        const safeAnswers =
+          forceSubmit &&
+          (!studentAnswers || Object.keys(studentAnswers).length === 0)
+            ? { message: "Auto-submitted — no answers provided." }
+            : studentAnswers;
+
+        submitData = await api.post("/api/submit_exam", {
+          user_id: studentId,
+          exam_id: selectedExam.id,
+          answers: safeAnswers,
+        });
+
+        setExamResult(submitData.data);
+        setShowResultModal(true);
+        toast.success("Exam submitted successfully!");
       }
 
-      // 🧹 5️⃣ Cleanup
-      setIsSubmitting(false);
-      setIsTakingExam(false);
-    },
-    [
-      isSubmitting,
-      selectedExam,
-      fetchBehaviorLogs,
-      stopNoFaceAlarm,
-      studentAnswers,
-      code,
-      language,
-      output,
-    ]
-  );
+      // 🧩 4️⃣ Classify behavior after submission
+      await apiAI.post("/api/classify_behavior_logs", {
+        user_id: studentId,
+        exam_id: selectedExam.id,
+      });
+
+      await fetchBehaviorLogs();
+      setShowCapturedModal(true);
+      toast.success("Behavior classification completed!");
+    } catch (error) {
+      console.error("Exam submission error:", error);
+      toast.error("Something went wrong while submitting the exam.");
+    }
+
+    // 🧹 5️⃣ Cleanup
+    setIsSubmitting(false);
+    setIsTakingExam(false);
+  },
+  [
+    isSubmitting,
+    selectedExam,
+    fetchBehaviorLogs,
+    stopNoFaceAlarm,
+    studentAnswers,
+    code,
+    language,
+    output,
+  ]
+);
 
   // Auto-submit if detection count reaches 20
   useEffect(() => {
