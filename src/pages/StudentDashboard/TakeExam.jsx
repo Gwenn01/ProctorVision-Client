@@ -23,12 +23,6 @@ import apiWebRTC from "../../apiWebRTC";
 
 import Swal from "sweetalert2";
 
-Swal.fire({
-  icon: "warning",
-  title: "Incomplete Answers",
-  text: "Please answer all questions before submitting.",
-});
-
 const TakeExam = () => {
   const [exams, setExams] = useState([]);
   const [selectedExam, setSelectedExam] = useState(null);
