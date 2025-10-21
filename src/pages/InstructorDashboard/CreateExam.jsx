@@ -458,7 +458,7 @@ const CreateExam = () => {
                 <i className="bi bi-pencil-square fs-1 mb-2 text-info"></i>
                 <span className="fs-5 text-dark">Create Activity</span>
                 <small className="text-muted mt-1">
-                  Add coding or written instructions
+                  Add coding instructions
                 </small>
               </Button>
             </Col>
