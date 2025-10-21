@@ -59,6 +59,7 @@ const TakeExam = () => {
 
   const [examResult, setExamResult] = useState(null); // store exam score & answers
   const [showResultModal, setShowResultModal] = useState(false); // control modal
+  const [isConnecting, setIsConnecting] = useState(false);
 
   // api debugger
   useEffect(() => {
@@ -349,7 +350,8 @@ const TakeExam = () => {
           apiWebRTC.defaults.baseURL,
           studentId,
           selectedExam.id,
-          videoPreviewRef.current
+          videoPreviewRef.current,
+          setIsConnecting // ✅ add this as the 5th argument
         );
       } catch (e) {
         console.error("Failed to start WebRTC:", e);
@@ -505,9 +507,19 @@ const TakeExam = () => {
         exam_id: selectedExam.id,
       });
 
-      //  Detect if it's a coding exam
+      // 🔍 Detect if it's a coding exam
       if (selectedExam.exam_category?.toLowerCase() === "coding") {
-        // Submit coding exam to backend
+        //  Validate input first
+        if (!code || code.trim() === "") {
+          toast.error("Please write your code before submitting!");
+          return;
+        }
+        if (!language) {
+          toast.error("Please select a programming language!");
+          return;
+        }
+
+        //  Submit coding exam to backend
         const { data } = await api.post("/api/submit_exam", {
           user_id: studentId,
           exam_id: selectedExam.id,
@@ -516,33 +528,36 @@ const TakeExam = () => {
           output, // last run result
         });
 
-        // Show both results and behavior logs
+        //  Show results
         setExamResult(data);
         setShowResultModal(true);
-
         await fetchBehaviorLogs();
-
-        toast.success(" Coding exam submitted and classified successfully!");
+        toast.success("Coding exam submitted and classified successfully!");
         setShowCapturedModal(true);
       } else {
-        // Normal Q&A exam submission
+        //  Validate normal Q&A exam answers
+        if (!studentAnswers || Object.keys(studentAnswers).length === 0) {
+          toast.error("Please answer the questions before submitting!");
+          return;
+        }
+
+        //  Submit QA exam
         const { data } = await api.post("/api/submit_exam", {
           user_id: studentId,
           exam_id: selectedExam.id,
           answers: studentAnswers,
         });
 
-        // Show result for normal exams
+        //  Show results
         setExamResult(data);
         setShowResultModal(true);
-
         await fetchBehaviorLogs();
-
         toast.success("QA exam submitted and classified successfully!");
         setShowCapturedModal(true);
       }
     } catch (error) {
-      toast.error(" Something went wrong while submitting the exam.");
+      console.error("Exam submission error:", error);
+      toast.error("Something went wrong while submitting the exam.");
     }
 
     setIsSubmitting(false);
@@ -681,16 +696,15 @@ const TakeExam = () => {
                       ))}
                   </Form.Select>
                 </Form.Group>
-                <div className="text-center mt-3">
-                  <Button
-                    variant="success"
-                    onClick={handleStartExam}
-                    disabled={!selectedExam}
-                    className="w-100"
-                  >
-                    <i className="bi bi-play-fill me-2"></i>Start
-                  </Button>
-                </div>
+                <Button
+                  variant="success"
+                  onClick={handleStartExam}
+                  disabled={!selectedExam || isConnecting}
+                  className="w-100"
+                >
+                  <i className="bi bi-play-fill me-2"></i>
+                  {isConnecting ? "Connecting..." : "Start"}
+                </Button>
               </Card.Body>
             </Card>
           </Col>
@@ -982,6 +996,26 @@ const TakeExam = () => {
                     playsInline
                     style={{ width: "100%", borderRadius: "0 0 0.5rem 0.5rem" }}
                   />
+
+                  {isConnecting && (
+                    <div
+                      className="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center bg-dark bg-opacity-75 text-white rounded-bottom"
+                      style={{ zIndex: 10 }}
+                    >
+                      <div
+                        className="spinner-border text-light mb-3"
+                        role="status"
+                      />
+                      <h6 className="fw-semibold">
+                        Connecting to proctoring server...
+                      </h6>
+                      <p className="small text-light text-center mb-0">
+                        Please wait while your camera and connection are
+                        initialized.
+                      </p>
+                    </div>
+                  )}
+
                   <div
                     ref={overlayRef}
                     className="position-absolute top-0 start-0 m-2 px-2 py-1 rounded text-white small"

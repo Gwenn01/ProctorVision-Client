@@ -1,5 +1,6 @@
 import * as mpFaceMesh from "@mediapipe/face_mesh";
 import { Camera } from "@mediapipe/camera_utils";
+import { toast } from "react-toastify"; // ✅ for user feedback
 
 let pc = null;
 let localStream = null;
@@ -46,68 +47,88 @@ export async function startProctoringWebRTC(
   apiBase,
   studentId,
   examId,
-  previewVideoEl
+  previewVideoEl,
+  setIsConnecting // pass a React state setter from parent component
 ) {
-  console.log("[RTC] Requesting camera access…");
+  try {
+    setIsConnecting?.(true);
+    toast.info("🔄 Connecting to proctoring server...");
 
-  // 1️⃣ Get camera
-  localStream = await navigator.mediaDevices.getUserMedia({
-    video: { width: 1280, height: 720, frameRate: { ideal: 30 } },
-    audio: false,
-  });
+    console.log("[RTC] Requesting camera access…");
+    localStream = await navigator.mediaDevices.getUserMedia({
+      video: { width: 1280, height: 720, frameRate: { ideal: 30 } },
+      audio: false,
+    });
 
-  previewVideoEl.srcObject = localStream;
-  await previewVideoEl.play();
-  console.log("[RTC] Local preview started.");
+    previewVideoEl.srcObject = localStream;
+    await previewVideoEl.play();
+    console.log("[RTC] Local preview started.");
+    toast.info("📷 Camera ready, initializing connection...");
 
-  // 2️⃣ Get ICE servers dynamically
-  const iceServers = await fetchIceServers(apiBase);
+    const iceServers = await fetchIceServers(apiBase);
+    pc = new RTCPeerConnection({ iceServers });
+    console.log("[RTC] PeerConnection created.");
 
-  // 3️⃣ Create PeerConnection
-  pc = new RTCPeerConnection({ iceServers });
-  console.log("[RTC] PeerConnection created.");
+    // 🔌 Handle connection state updates
+    pc.oniceconnectionstatechange = () => {
+      console.log("ICE state:", pc.iceConnectionState);
+      if (pc.iceConnectionState === "failed") {
+        console.warn("[RTC] ICE failed, restarting...");
+        try {
+          pc.restartIce();
+        } catch {}
+      }
+    };
 
-  pc.oniceconnectionstatechange = () => {
-    console.log("ICE state:", pc.iceConnectionState);
-    if (pc.iceConnectionState === "failed") {
-      console.warn("[RTC] ICE failed, restarting...");
-      try {
-        pc.restartIce();
-      } catch {}
-    }
-  };
+    pc.onconnectionstatechange = () => {
+      console.log("RTC state:", pc.connectionState);
+      if (pc.connectionState === "connected") {
+        toast.success("✅ WebRTC connected! Proctoring started.");
+        console.log("✅ WebRTC connected.");
+        setIsConnecting?.(false);
+      } else if (pc.connectionState === "failed") {
+        toast.error("⚠️ Connection failed, please check your internet.");
+        setIsConnecting?.(false);
+      }
+    };
 
-  pc.onconnectionstatechange = () => {
-    console.log("RTC state:", pc.connectionState);
-    if (pc.connectionState === "connected") console.log("✅ WebRTC connected.");
-  };
+    // 🎥 Add camera tracks
+    localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
 
-  // 4️⃣ Add tracks
-  localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
+    // 🧩 Create and send offer
+    toast.info("🔁 Establishing secure session...");
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    await waitForIceGatheringComplete(pc);
 
-  // 5️⃣ Create and send offer
-  const offer = await pc.createOffer();
-  await pc.setLocalDescription(offer);
-  await waitForIceGatheringComplete(pc);
+    const response = await fetch(`${apiBase}/webrtc/offer`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sdp: pc.localDescription.sdp,
+        type: pc.localDescription.type,
+        student_id: String(studentId),
+        exam_id: String(examId),
+      }),
+    });
 
-  const response = await fetch(`${apiBase}/webrtc/offer`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      sdp: pc.localDescription.sdp,
-      type: pc.localDescription.type,
-      student_id: String(studentId),
-      exam_id: String(examId),
-    }),
-  });
+    if (!response.ok) throw new Error("Offer failed");
 
-  if (!response.ok) throw new Error("Offer failed");
-  const answer = await response.json();
-  await pc.setRemoteDescription(answer);
-  console.log("[RTC] Remote description set.");
+    const answer = await response.json();
+    await pc.setRemoteDescription(answer);
+    console.log("[RTC] Remote description set.");
 
-  // 6️⃣ OPTIONAL: Initialize FaceMesh detection (local feedback)
-  setupFaceMesh(previewVideoEl);
+    // 🧠 Start MediaPipe FaceMesh for feedback
+    setupFaceMesh(previewVideoEl);
+
+    // ✅ Finish loading phase
+    setIsConnecting?.(false);
+    toast.success("🧩 Proctoring connection established!");
+  } catch (err) {
+    console.error("[RTC] Error during startProctoringWebRTC:", err);
+    toast.error("❌ Failed to start proctoring session. Please try again.");
+    setIsConnecting?.(false);
+  }
 }
 
 /**
@@ -115,13 +136,11 @@ export async function startProctoringWebRTC(
  */
 export async function stopProctoringWebRTC() {
   try {
-    // 🧠 Safely stop camera if present
     if (camera && typeof camera.stop === "function") {
       camera.stop();
       console.log("[RTC] Camera instance stopped.");
     }
 
-    // 🧩 Safely close MediaPipe FaceMesh
     if (faceMesh && typeof faceMesh.close === "function") {
       try {
         await faceMesh.close();
@@ -131,16 +150,12 @@ export async function stopProctoringWebRTC() {
       }
     }
 
-    // 🔌 Close PeerConnection
     if (pc) {
-      pc.getSenders().forEach((s) => {
-        if (s.track) s.track.stop();
-      });
+      pc.getSenders().forEach((s) => s.track?.stop());
       pc.close();
       console.log("[RTC] PeerConnection closed.");
     }
 
-    // 📷 Stop all media tracks
     if (localStream) {
       localStream.getTracks().forEach((t) => t.stop());
       console.log("[RTC] Local camera tracks stopped.");
@@ -148,7 +163,6 @@ export async function stopProctoringWebRTC() {
   } catch (err) {
     console.error("[RTC] Error during stopProctoringWebRTC:", err);
   } finally {
-    // 🧹 Cleanup references
     pc = null;
     localStream = null;
     console.log("[RTC] Cleanup completed.");
@@ -172,13 +186,10 @@ function setupFaceMesh(videoEl) {
   });
 
   faceMesh.onResults((results) => {
-    if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+    if (results.multiFaceLandmarks?.length > 0) {
       const landmarks = results.multiFaceLandmarks[0];
-
-      // Simple horizontal head tilt check
-      const leftEye = landmarks[33]; // left eye outer corner
-      const rightEye = landmarks[263]; // right eye outer corner
-
+      const leftEye = landmarks[33];
+      const rightEye = landmarks[263];
       const diffX = leftEye.x - rightEye.x;
 
       if (diffX > 0.09) console.log("👀 Looking LEFT");
