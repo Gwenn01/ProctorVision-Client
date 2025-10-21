@@ -52,7 +52,6 @@ export async function startProctoringWebRTC(
 ) {
   try {
     setIsConnecting?.(true);
-    toast.info("🔄 Connecting to proctoring server...");
 
     console.log("[RTC] Requesting camera access…");
     localStream = await navigator.mediaDevices.getUserMedia({
@@ -63,7 +62,6 @@ export async function startProctoringWebRTC(
     previewVideoEl.srcObject = localStream;
     await previewVideoEl.play();
     console.log("[RTC] Local preview started.");
-    toast.info("📷 Camera ready, initializing connection...");
 
     const iceServers = await fetchIceServers(apiBase);
     pc = new RTCPeerConnection({ iceServers });
@@ -83,7 +81,7 @@ export async function startProctoringWebRTC(
     pc.onconnectionstatechange = () => {
       console.log("RTC state:", pc.connectionState);
       if (pc.connectionState === "connected") {
-        toast.success("✅ WebRTC connected! Proctoring started.");
+        toast.success(" WebRTC connected! Proctoring started.");
         console.log("✅ WebRTC connected.");
         setIsConnecting?.(false);
       } else if (pc.connectionState === "failed") {
@@ -96,7 +94,6 @@ export async function startProctoringWebRTC(
     localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
 
     // 🧩 Create and send offer
-    toast.info("🔁 Establishing secure session...");
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
     await waitForIceGatheringComplete(pc);
@@ -123,7 +120,6 @@ export async function startProctoringWebRTC(
 
     // ✅ Finish loading phase
     setIsConnecting?.(false);
-    toast.success("🧩 Proctoring connection established!");
   } catch (err) {
     console.error("[RTC] Error during startProctoringWebRTC:", err);
     toast.error("❌ Failed to start proctoring session. Please try again.");
