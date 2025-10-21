@@ -382,36 +382,84 @@ const CreateExam = () => {
       <ToastContainer autoClose={2500} />
 
       {!examType ? (
-        <Card className="shadow-lg border-0 p-5 text-center">
-          <h3 className="fw-bold mb-4">Select What You Want to Create</h3>
-          <Row className="g-4 justify-content-center">
-            <Col xs={12} md={5}>
+        <Card className="shadow-lg border-0 text-center py-5 px-4 bg-light">
+          <h3 className="fw-bold mb-4 text-dark">
+            <i className="bi bi-ui-checks-grid me-2 text-primary"></i>
+            Select What You Want to Create
+          </h3>
+
+          <Row className="g-4 justify-content-center mt-3">
+            <Col xs={12} md={5} lg={4}>
               <Button
-                variant="primary"
+                variant="outline-primary"
                 size="lg"
-                className="w-100 py-3 d-flex align-items-center justify-content-center gap-2"
+                className="w-100 py-4 fw-semibold rounded-4 border-2 d-flex flex-column align-items-center justify-content-center shadow-sm"
+                style={{
+                  transition: "all 0.25s ease-in-out",
+                  background:
+                    "linear-gradient(135deg, rgba(13,110,253,0.1), rgba(13,110,253,0.05))",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "scale(1.03)";
+                  e.currentTarget.style.boxShadow =
+                    "0 8px 16px rgba(13,110,253,0.3)";
+                  e.currentTarget.style.background =
+                    "linear-gradient(135deg, rgba(13,110,253,0.15), rgba(13,110,253,0.05))";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "scale(1.0)";
+                  e.currentTarget.style.boxShadow = "0 4px 8px rgba(0,0,0,0.1)";
+                  e.currentTarget.style.background =
+                    "linear-gradient(135deg, rgba(13,110,253,0.1), rgba(13,110,253,0.05))";
+                }}
                 onClick={() => {
                   setExamType("Exam");
-                  setExamCategory(""); // Let them choose QA or CODING for exams
+                  setExamCategory("");
                 }}
                 disabled={loading}
               >
-                <i className="bi bi-journal-text fs-3"></i>
-                <span className="fw-semibold">Create Exam</span>
+                <i className="bi bi-journal-text fs-1 mb-2 text-primary"></i>
+                <span className="fs-5 text-dark">Create Exam</span>
+                <small className="text-muted mt-1">
+                  Build QA or coding-based exams
+                </small>
               </Button>
+            </Col>
 
+            <Col xs={12} md={5} lg={4}>
               <Button
-                variant="info"
+                variant="outline-info"
                 size="lg"
-                className="w-100 py-3 d-flex align-items-center justify-content-center gap-2"
+                className="w-100 py-4 fw-semibold rounded-4 border-2 d-flex flex-column align-items-center justify-content-center shadow-sm"
+                style={{
+                  transition: "all 0.25s ease-in-out",
+                  background:
+                    "linear-gradient(135deg, rgba(13,202,240,0.1), rgba(13,202,240,0.05))",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "scale(1.03)";
+                  e.currentTarget.style.boxShadow =
+                    "0 8px 16px rgba(13,202,240,0.3)";
+                  e.currentTarget.style.background =
+                    "linear-gradient(135deg, rgba(13,202,240,0.15), rgba(13,202,240,0.05))";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "scale(1.0)";
+                  e.currentTarget.style.boxShadow = "0 4px 8px rgba(0,0,0,0.1)";
+                  e.currentTarget.style.background =
+                    "linear-gradient(135deg, rgba(13,202,240,0.1), rgba(13,202,240,0.05))";
+                }}
                 onClick={() => {
                   setExamType("Activity");
-                  setExamCategory("CODING"); // Automatically force to CODING
+                  setExamCategory("CODING");
                 }}
                 disabled={loading}
               >
-                <i className="bi bi-pencil-square fs-3"></i>
-                <span className="fw-semibold">Create Activity</span>
+                <i className="bi bi-pencil-square fs-1 mb-2 text-info"></i>
+                <span className="fs-5 text-dark">Create Activity</span>
+                <small className="text-muted mt-1">
+                  Add coding or written instructions
+                </small>
               </Button>
             </Col>
           </Row>
