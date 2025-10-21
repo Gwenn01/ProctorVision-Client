@@ -21,6 +21,14 @@ import api from "../../api";
 import apiAI from "../../apiAI";
 import apiWebRTC from "../../apiWebRTC";
 
+import Swal from "sweetalert2";
+
+Swal.fire({
+  icon: "warning",
+  title: "Incomplete Answers",
+  text: "Please answer all questions before submitting.",
+});
+
 const TakeExam = () => {
   const [exams, setExams] = useState([]);
   const [selectedExam, setSelectedExam] = useState(null);
@@ -487,16 +495,32 @@ const TakeExam = () => {
     // ⚡ 1️⃣ Validate first before loading
     if (selectedExam.exam_category?.toLowerCase() === "coding") {
       if (!code || code.trim() === "") {
-        toast.warn("Please write your code before submitting!");
+        Swal.fire({
+          icon: "warning",
+          title: "Missing Code!",
+          text: "Please write your code before submitting.",
+          confirmButtonColor: "#3085d6",
+        });
         return;
       }
+
       if (!language) {
-        toast.warn("Please select a programming language!");
+        Swal.fire({
+          icon: "info",
+          title: "Select Language",
+          text: "Please select a programming language before submitting.",
+          confirmButtonColor: "#3085d6",
+        });
         return;
       }
     } else {
       if (!studentAnswers || Object.keys(studentAnswers).length === 0) {
-        toast.warn("Please answer the questions before submitting!");
+        Swal.fire({
+          icon: "warning",
+          title: "Unanswered Questions",
+          text: "Please answer all questions before submitting your exam.",
+          confirmButtonColor: "#d33",
+        });
         return;
       }
     }
