@@ -39,6 +39,10 @@ const StudentBehavior = () => {
 
   const instructorId = JSON.parse(localStorage.getItem("userData"))?.id;
 
+  const [loadingStudent, setLoadingStudent] = useState(null);
+  const [loadingReview, setLoadingReview] = useState(null);
+  const [loadingExamId, setLoadingExamId] = useState(null);
+
   useEffect(() => {
     const fetchExams = async () => {
       try {
@@ -347,40 +351,84 @@ const StudentBehavior = () => {
             },
           ].map((group, idx) => (
             <Col md={6} lg={5} key={idx}>
-              <Card className="shadow-sm mb-4 h-100">
-                <Card.Header className={`bg-${group.color} text-white fw-bold`}>
-                  {group.icon} {group.label}
+              <Card className="shadow mb-4 h-100 border-0 rounded-3">
+                <Card.Header
+                  className={`bg-${group.color} text-white fw-semibold rounded-top-3 d-flex align-items-center`}
+                  style={{
+                    background:
+                      group.color === "success"
+                        ? "linear-gradient(135deg, #198754, #28a745)"
+                        : "linear-gradient(135deg, #6c757d, #adb5bd)",
+                  }}
+                >
+                  <span className="me-2 fs-5">{group.icon}</span>
+                  {group.label}
                 </Card.Header>
+
                 <Card.Body
-                  className="overflow-auto"
-                  style={{ maxHeight: "400px" }}
+                  className="overflow-auto bg-light"
+                  style={{
+                    maxHeight: "420px",
+                    borderRadius: "0 0 0.5rem 0.5rem",
+                  }}
                 >
                   {group.data.length ? (
                     group.data.map((exam) => (
                       <Card
                         key={exam.id}
-                        className="mb-2 border-0 shadow-sm"
-                        onClick={() => group.handler(exam)}
-                        style={{ cursor: "pointer" }}
+                        className={`mb-3 border-0 shadow-sm ${
+                          loadingExamId === exam.id ? "opacity-75" : ""
+                        }`}
+                        style={{
+                          cursor: loadingExamId ? "not-allowed" : "pointer",
+                          transition: "all 0.2s ease-in-out",
+                        }}
+                        onClick={async () => {
+                          if (loadingExamId) return;
+                          setLoadingExamId(exam.id);
+                          try {
+                            await group.handler(exam);
+                          } finally {
+                            setLoadingExamId(null);
+                          }
+                        }}
                       >
-                        <Card.Body>
-                          <strong>{exam.title}</strong>
-                          <div className="text-muted small">
-                            {formatDate(new Date(exam.exam_date))}
-                            <br />
-                            {formatTimeRange(
-                              exam.exam_date,
-                              exam.start_time,
-                              exam.duration_minutes
-                            )}
+                        <Card.Body className="d-flex justify-content-between align-items-center">
+                          <div>
+                            <h6 className="mb-1 fw-bold text-dark">
+                              {exam.title}
+                            </h6>
+                            <div className="text-muted small">
+                              <i className="bi bi-calendar-event me-1"></i>
+                              {formatDate(new Date(exam.exam_date))}
+                              <br />
+                              <i className="bi bi-clock me-1"></i>
+                              {formatTimeRange(
+                                exam.exam_date,
+                                exam.start_time,
+                                exam.duration_minutes
+                              )}
+                            </div>
                           </div>
+
+                          {loadingExamId === exam.id ? (
+                            <Spinner
+                              animation="border"
+                              variant="primary"
+                              size="sm"
+                              className="ms-2"
+                            />
+                          ) : (
+                            <i className="bi bi-chevron-right text-secondary fs-5"></i>
+                          )}
                         </Card.Body>
                       </Card>
                     ))
                   ) : (
-                    <p className="text-muted text-center">
+                    <div className="text-center py-5 text-muted">
+                      <i className="bi bi-inboxes fs-2 d-block mb-2"></i>
                       No exams or activities
-                    </p>
+                    </div>
                   )}
                 </Card.Body>
               </Card>
@@ -461,9 +509,29 @@ const StudentBehavior = () => {
                       <Button
                         variant="outline-primary"
                         size="sm"
-                        onClick={() => handleStudentClick(student)}
+                        disabled={loadingStudent === student.id}
+                        onClick={async () => {
+                          setLoadingStudent(student.id);
+                          await handleStudentClick(student);
+                          setLoadingStudent(null);
+                        }}
                       >
-                        <i className="bi bi-eye me-1"></i> View
+                        {loadingStudent === student.id ? (
+                          <>
+                            <Spinner
+                              as="span"
+                              animation="border"
+                              size="sm"
+                              role="status"
+                              className="me-2"
+                            />
+                            Loading...
+                          </>
+                        ) : (
+                          <>
+                            <i className="bi bi-eye me-1"></i> View
+                          </>
+                        )}
                       </Button>
                     </td>
                   </tr>
@@ -521,18 +589,59 @@ const StudentBehavior = () => {
                       <Button
                         variant="outline-primary"
                         size="sm"
-                        onClick={() => handleStudentClick(student)}
+                        disabled={loadingStudent === student.id}
+                        onClick={async () => {
+                          setLoadingStudent(student.id);
+                          await handleStudentClick(student);
+                          setLoadingStudent(null);
+                        }}
                       >
-                        <i className="bi bi-eye me-1"></i> View
+                        {loadingStudent === student.id ? (
+                          <>
+                            <Spinner
+                              as="span"
+                              animation="border"
+                              size="sm"
+                              role="status"
+                              className="me-2"
+                            />
+                            Loading...
+                          </>
+                        ) : (
+                          <>
+                            <i className="bi bi-eye me-1"></i> View
+                          </>
+                        )}
                       </Button>
                     </td>
                     <td>
                       <Button
                         variant="outline-success"
                         size="sm"
-                        onClick={() => handleStudentReviewClick(student)}
+                        disabled={loadingReview === student.id}
+                        onClick={async () => {
+                          setLoadingReview(student.id);
+                          await handleStudentReviewClick(student);
+                          setLoadingReview(null);
+                        }}
                       >
-                        <i className="bi bi-file-earmark-text me-1"></i> Review
+                        {loadingReview === student.id ? (
+                          <>
+                            <Spinner
+                              as="span"
+                              animation="border"
+                              size="sm"
+                              role="status"
+                              className="me-2"
+                            />
+                            Loading...
+                          </>
+                        ) : (
+                          <>
+                            <i className="bi bi-file-earmark-text me-1"></i>{" "}
+                            Review
+                          </>
+                        )}
                       </Button>
                     </td>
                   </tr>
@@ -574,10 +683,12 @@ const StudentBehavior = () => {
                       className="rounded-top"
                     />
                     <Card.Body>
+                      {/*
                       <p className="mb-2">
                         <BsExclamationTriangleFill className="me-1 text-warning" />
                         <strong>Type:</strong> {log.warning_type}
                       </p>
+                      */}
                       <p
                         className={`mb-2 fw-semibold ${
                           log.classification_label === "Cheating"
