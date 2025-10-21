@@ -484,82 +484,77 @@ const TakeExam = () => {
       return;
     }
 
+    // ⚡ 1️⃣ Validate first before loading
+    if (selectedExam.exam_category?.toLowerCase() === "coding") {
+      if (!code || code.trim() === "") {
+        toast.warn("Please write your code before submitting!");
+        return;
+      }
+      if (!language) {
+        toast.warn("Please select a programming language!");
+        return;
+      }
+    } else {
+      if (!studentAnswers || Object.keys(studentAnswers).length === 0) {
+        toast.warn("Please answer the questions before submitting!");
+        return;
+      }
+    }
+
+    // 🕓 2️⃣ Start loading after validation passes
     setIsSubmitting(true);
 
     try {
-      //  Update exam status first (for both types)
+      // ✅ Stop camera and AI detection first
+      stopProctoringWebRTC();
+      stopNoFaceAlarm();
+
+      // ✅ Update submission status
       await api.post("/api/update_exam_status_submit", {
         student_id: studentId,
       });
 
-      toast.success("Exam submitted successfully!");
-    } catch {
-      toast.error("Failed to submit exam.");
-    }
-
-    try {
-      stopProctoringWebRTC();
-      stopNoFaceAlarm();
-
-      // This one goes to your AI backend (Hugging Face)
-      await apiAI.post("/api/classify_behavior_logs", {
-        user_id: studentId,
-        exam_id: selectedExam.id,
-      });
-
-      // 🔍 Detect if it's a coding exam
+      // 🧠 3️⃣ Submit the actual exam (based on type)
+      let submitData;
       if (selectedExam.exam_category?.toLowerCase() === "coding") {
-        //  Validate input first
-        if (!code || code.trim() === "") {
-          toast.error("Please write your code before submitting!");
-          return;
-        }
-        if (!language) {
-          toast.error("Please select a programming language!");
-          return;
-        }
-
-        //  Submit coding exam to backend
-        const { data } = await api.post("/api/submit_exam", {
+        submitData = await api.post("/api/submit_exam", {
           user_id: studentId,
           exam_id: selectedExam.id,
           language,
           code,
-          output, // last run result
+          output,
         });
 
-        //  Show results
-        setExamResult(data);
+        setExamResult(submitData.data);
         setShowResultModal(true);
-        await fetchBehaviorLogs();
-        toast.success("Coding exam submitted and classified successfully!");
-        setShowCapturedModal(true);
+        toast.success("Coding exam submitted successfully!");
       } else {
-        //  Validate normal Q&A exam answers
-        if (!studentAnswers || Object.keys(studentAnswers).length === 0) {
-          toast.error("Please answer the questions before submitting!");
-          return;
-        }
-
-        //  Submit QA exam
-        const { data } = await api.post("/api/submit_exam", {
+        submitData = await api.post("/api/submit_exam", {
           user_id: studentId,
           exam_id: selectedExam.id,
           answers: studentAnswers,
         });
 
-        //  Show results
-        setExamResult(data);
+        setExamResult(submitData.data);
         setShowResultModal(true);
-        await fetchBehaviorLogs();
-        toast.success("QA exam submitted and classified successfully!");
-        setShowCapturedModal(true);
+        toast.success("Exam submitted successfully!");
       }
+
+      // 🧩 4️⃣ Classify behavior after submission
+      await apiAI.post("/api/classify_behavior_logs", {
+        user_id: studentId,
+        exam_id: selectedExam.id,
+      });
+
+      await fetchBehaviorLogs();
+      setShowCapturedModal(true);
+      toast.success("Behavior classification completed!");
     } catch (error) {
       console.error("Exam submission error:", error);
       toast.error("Something went wrong while submitting the exam.");
     }
 
+    // 🧹 5️⃣ Cleanup
     setIsSubmitting(false);
     setIsTakingExam(false);
   }, [
