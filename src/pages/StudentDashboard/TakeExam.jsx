@@ -63,6 +63,8 @@ const TakeExam = () => {
   const [showResultModal, setShowResultModal] = useState(false); // control modal
   const [isConnecting, setIsConnecting] = useState(false);
 
+  const [detectionCount, setDetectionCount] = useState(0);
+
   // api debugger
   useEffect(() => {
     console.log("AI Base URL = ", apiAI.defaults.baseURL);
@@ -387,6 +389,11 @@ const TakeExam = () => {
           stopNoFaceAlarm();
         }
 
+        // 🚨 Count every suspicious detection except "Looking Forward"
+        if (warn !== "Looking Forward" && warn !== prevWarnRef.current) {
+          setDetectionCount((prev) => prev + 1);
+        }
+
         // One-shot beep on NEW violation (exclude No Face; continuous handled above)
         const isViolation = warn !== "Looking Forward" && !isNoFace;
         if (isViolation && warn !== prevWarnRef.current) {
@@ -477,7 +484,7 @@ const TakeExam = () => {
   // Submit exam
   const handleSubmitExam = useCallback(async () => {
     if (isSubmitting) return;
-
+    setDetectionCount(0);
     const userData = JSON.parse(localStorage.getItem("userData"));
     const studentId = userData?.id;
 
@@ -586,6 +593,20 @@ const TakeExam = () => {
     output,
   ]);
 
+  // Auto-submit if detection count reaches 20
+  useEffect(() => {
+    if (isTakingExam && detectionCount >= 20) {
+      Swal.fire({
+        icon: "error",
+        title: "Exam Auto-Submitted",
+        text: "You have reached the maximum number of suspicious detections (20). Your exam will now be submitted automatically.",
+        confirmButtonColor: "#d33",
+      }).then(() => {
+        handleSubmitExam();
+      });
+    }
+  }, [detectionCount, isTakingExam, handleSubmitExam]);
+
   // Auto-submit when time is up
   useEffect(() => {
     if (isTakingExam && timer === 0 && selectedExam?.id) {
@@ -667,7 +688,7 @@ const TakeExam = () => {
         </Modal.Header>
         <Modal.Body>
           <p className="fs-5 text-danger text-center">
-            {`Warning: You are ${warningMessage}`}
+            {`Suspicoius Detected`}
           </p>
         </Modal.Body>
         <Modal.Footer>
