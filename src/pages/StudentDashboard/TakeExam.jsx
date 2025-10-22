@@ -481,139 +481,139 @@ const TakeExam = () => {
     setStudentAnswers((prev) => ({ ...prev, [qId]: optionId }));
   };
 
- // Submit exam
-const handleSubmitExam = useCallback(
-  async (forceSubmit = false) => {
-    if (isSubmitting) return;
+  // Submit exam
+  const handleSubmitExam = useCallback(
+    async (forceSubmit = false) => {
+      if (isSubmitting) return;
 
-    setDetectionCount(0);
-    const userData = JSON.parse(localStorage.getItem("userData"));
-    const studentId = userData?.id;
+      setDetectionCount(0);
+      const userData = JSON.parse(localStorage.getItem("userData"));
+      const studentId = userData?.id;
 
-    if (!studentId || !selectedExam?.id) {
-      toast.error("Missing exam or student information.");
-      return;
-    }
-
-    // ⚡ 1️⃣ Manual validation (skip if auto-submit)
-    if (!forceSubmit) {
-      if (selectedExam.exam_category?.toLowerCase() === "coding") {
-        if (!code || code.trim() === "") {
-          Swal.fire({
-            icon: "warning",
-            title: "Missing Code!",
-            text: "Please write your code before submitting.",
-            confirmButtonColor: "#3085d6",
-          });
-          return;
-        }
-
-        if (!language) {
-          Swal.fire({
-            icon: "info",
-            title: "Select Language",
-            text: "Please select a programming language before submitting.",
-            confirmButtonColor: "#3085d6",
-          });
-          return;
-        }
-      } else {
-        if (!studentAnswers || Object.keys(studentAnswers).length === 0) {
-          Swal.fire({
-            icon: "warning",
-            title: "Unanswered Questions",
-            text: "Please answer all questions before submitting your exam.",
-            confirmButtonColor: "#d33",
-          });
-          return;
-        }
-      }
-    }
-
-    // 🕓 2️⃣ Start submission
-    setIsSubmitting(true);
-
-    try {
-      // ✅ Stop camera and AI detection before submission
-      stopProctoringWebRTC();
-      stopNoFaceAlarm();
-
-      // ✅ Update submission status in DB
-      await api.post("/api/update_exam_status_submit", {
-        student_id: studentId,
-      });
-
-      // 🧠 3️⃣ Submit the actual exam (based on type)
-      const category = selectedExam.exam_category?.toLowerCase();
-      let submitData;
-
-      if (category === "coding") {
-        // handle safe defaults for auto-submission
-        const safeLanguage = forceSubmit ? language || "none" : language;
-        const safeCode = forceSubmit
-          ? code?.trim() || "// Auto-submitted — no code provided."
-          : code;
-        const safeOutput = output || "";
-
-        submitData = await api.post("/api/submit_exam", {
-          user_id: studentId,
-          exam_id: selectedExam.id,
-          language: safeLanguage,
-          code: safeCode,
-          output: safeOutput,
-        });
-
-        setExamResult(submitData.data);
-        setShowResultModal(true);
-        toast.success("Coding exam submitted successfully!");
-      } else {
-        // handle safe defaults for auto-submission
-        const safeAnswers =
-          forceSubmit &&
-          (!studentAnswers || Object.keys(studentAnswers).length === 0)
-            ? { message: "Auto-submitted — no answers provided." }
-            : studentAnswers;
-
-        submitData = await api.post("/api/submit_exam", {
-          user_id: studentId,
-          exam_id: selectedExam.id,
-          answers: safeAnswers,
-        });
-
-        setExamResult(submitData.data);
-        setShowResultModal(true);
-        toast.success("Exam submitted successfully!");
+      if (!studentId || !selectedExam?.id) {
+        toast.error("Missing exam or student information.");
+        return;
       }
 
-      // 🧩 4️⃣ Classify behavior after submission
-      await apiAI.post("/api/classify_behavior_logs", {
-        user_id: studentId,
-        exam_id: selectedExam.id,
-      });
+      // ⚡ 1️⃣ Manual validation (skip if auto-submit)
+      if (!forceSubmit) {
+        if (selectedExam.exam_category?.toLowerCase() === "coding") {
+          if (!code || code.trim() === "") {
+            Swal.fire({
+              icon: "warning",
+              title: "Missing Code!",
+              text: "Please write your code before submitting.",
+              confirmButtonColor: "#3085d6",
+            });
+            return;
+          }
 
-      await fetchBehaviorLogs();
-      setShowCapturedModal(true);
-      toast.success("Behavior classification completed!");
-    } catch (error) {
-      console.error("Exam submission error:", error);
-      toast.error("Something went wrong while submitting the exam.");
-    }
+          if (!language) {
+            Swal.fire({
+              icon: "info",
+              title: "Select Language",
+              text: "Please select a programming language before submitting.",
+              confirmButtonColor: "#3085d6",
+            });
+            return;
+          }
+        } else {
+          if (!studentAnswers || Object.keys(studentAnswers).length === 0) {
+            Swal.fire({
+              icon: "warning",
+              title: "Unanswered Questions",
+              text: "Please answer all questions before submitting your exam.",
+              confirmButtonColor: "#d33",
+            });
+            return;
+          }
+        }
+      }
 
-    // 🧹 5️⃣ Cleanup
-    setIsSubmitting(false);
-    setIsTakingExam(false);
-  },
-  [
-    isSubmitting,
-    selectedExam,
-    fetchBehaviorLogs,
-    stopNoFaceAlarm,
-    studentAnswers,
-    code,
-    language,
-    output,
-  ]
-);
+      // 🕓 2️⃣ Start submission
+      setIsSubmitting(true);
+
+      try {
+        // ✅ Stop camera and AI detection before submission
+        stopProctoringWebRTC();
+        stopNoFaceAlarm();
+
+        // ✅ Update submission status in DB
+        await api.post("/api/update_exam_status_submit", {
+          student_id: studentId,
+        });
+
+        // 🧠 3️⃣ Submit the actual exam (based on type)
+        const category = selectedExam.exam_category?.toLowerCase();
+        let submitData;
+
+        if (category === "coding") {
+          // handle safe defaults for auto-submission
+          const safeLanguage = forceSubmit ? language || "none" : language;
+          const safeCode = forceSubmit
+            ? code?.trim() || "// Auto-submitted — no code provided."
+            : code;
+          const safeOutput = output || "";
+
+          submitData = await api.post("/api/submit_exam", {
+            user_id: studentId,
+            exam_id: selectedExam.id,
+            language: safeLanguage,
+            code: safeCode,
+            output: safeOutput,
+          });
+
+          setExamResult(submitData.data);
+          setShowResultModal(true);
+          toast.success("Coding exam submitted successfully!");
+        } else {
+          // handle safe defaults for auto-submission
+          const safeAnswers =
+            forceSubmit &&
+            (!studentAnswers || Object.keys(studentAnswers).length === 0)
+              ? { message: "Auto-submitted — no answers provided." }
+              : studentAnswers;
+
+          submitData = await api.post("/api/submit_exam", {
+            user_id: studentId,
+            exam_id: selectedExam.id,
+            answers: safeAnswers,
+          });
+
+          setExamResult(submitData.data);
+          setShowResultModal(true);
+          toast.success("Exam submitted successfully!");
+        }
+
+        // 🧩 4️⃣ Classify behavior after submission
+        await apiAI.post("/api/classify_behavior_logs", {
+          user_id: studentId,
+          exam_id: selectedExam.id,
+        });
+
+        await fetchBehaviorLogs();
+        setShowCapturedModal(true);
+        toast.success("Behavior classification completed!");
+      } catch (error) {
+        console.error("Exam submission error:", error);
+        toast.error("Something went wrong while submitting the exam.");
+      }
+
+      // 🧹 5️⃣ Cleanup
+      setIsSubmitting(false);
+      setIsTakingExam(false);
+    },
+    [
+      isSubmitting,
+      selectedExam,
+      fetchBehaviorLogs,
+      stopNoFaceAlarm,
+      studentAnswers,
+      code,
+      language,
+      output,
+    ]
+  );
 
   // Auto-submit if detection count reaches 20
   useEffect(() => {
@@ -672,6 +672,39 @@ const handleSubmitExam = useCallback(
       setIsRunning(false);
     }
   };
+  // 🎥 Force mobile camera to landscape orientation
+  useEffect(() => {
+    const video = videoPreviewRef.current;
+    if (!video) return;
+
+    const handleOrientation = () => {
+      const isMobile = window.innerWidth < 768;
+      const isLandscape = window.matchMedia("(orientation: landscape)").matches;
+
+      if (isMobile && !isLandscape) {
+        // 👇 Force horizontal preview on portrait mobile
+        video.style.transform = "rotate(90deg)";
+        video.style.width = "100vh"; // swap dimensions
+        video.style.height = "100vw";
+        video.style.objectFit = "cover";
+      } else {
+        // 👇 Normal orientation (desktop or already landscape)
+        video.style.transform = "rotate(0deg)";
+        video.style.width = "100%";
+        video.style.height = "auto";
+        video.style.objectFit = "cover";
+      }
+    };
+
+    handleOrientation();
+    window.addEventListener("resize", handleOrientation);
+    window.addEventListener("orientationchange", handleOrientation);
+
+    return () => {
+      window.removeEventListener("resize", handleOrientation);
+      window.removeEventListener("orientationchange", handleOrientation);
+    };
+  }, []);
 
   return (
     <Container fluid className="py-4 px-3 px-md-5 bg-light min-vh-100">
@@ -806,13 +839,23 @@ const handleSubmitExam = useCallback(
                     </Card.Header>
                     <Card.Body>
                       {examText ? (
-                        <div className="p-4 rounded border bg-light">
+                        <div
+                          className="p-3 p-md-4 rounded border bg-light"
+                          style={{
+                            width: "100%",
+                            maxWidth: "900px",
+                            margin: "0 auto",
+                          }}
+                        >
                           <h5 className="fw-bold text-center text-primary mb-3">
                             Exam Instructions
                           </h5>
                           <div
                             className="text-start mx-auto"
-                            style={{ maxWidth: "750px" }}
+                            style={{
+                              maxWidth: "100%", // 👈 ensures mobile-friendly text wrapping
+                              width: "100%",
+                            }}
                           >
                             {examText.split("\n").map((line, idx) => (
                               <p key={idx} className="mb-2">
@@ -821,7 +864,7 @@ const handleSubmitExam = useCallback(
                             ))}
                           </div>
 
-                          {/*  Coding Section */}
+                          {/* Coding Section */}
                           <div className="mt-4">
                             <Form.Select
                               value={language}
@@ -835,20 +878,40 @@ const handleSubmitExam = useCallback(
                               <option value="php">PHP</option>
                             </Form.Select>
 
-                            <Editor
-                              height="400px"
-                              language={language}
-                              theme="vs-dark"
-                              value={code}
-                              onChange={(value) => setCode(value)}
-                            />
+                            <div
+                              className="coding-editor-wrapper mt-3"
+                              style={{
+                                width: "100%",
+                                minHeight: "250px",
+                                height:
+                                  window.innerWidth < 576 ? "45vh" : "60vh", // 👈 responsive height
+                                maxHeight: "500px",
+                              }}
+                            >
+                              <Editor
+                                height="100%"
+                                language={language}
+                                theme="vs-dark"
+                                value={code}
+                                onChange={(value) => setCode(value)}
+                                options={{
+                                  fontSize: 14,
+                                  minimap: { enabled: false },
+                                  wordWrap: "on",
+                                  automaticLayout: true,
+                                  scrollBeyondLastLine: false,
+                                  lineNumbers: "on",
+                                  smoothScrolling: true,
+                                }}
+                              />
+                            </div>
 
-                            {/* 🟦 Run Button */}
+                            {/* Run Button */}
                             <Button
                               variant={isRunning ? "secondary" : "primary"}
                               onClick={runCode}
                               disabled={isRunning}
-                              className="mt-3 px-4 fw-semibold d-flex align-items-center mx-auto"
+                              className="mt-3 px-4 fw-semibold d-flex align-items-center justify-content-center mx-auto"
                             >
                               {isRunning ? (
                                 <>
@@ -867,17 +930,18 @@ const handleSubmitExam = useCallback(
                               )}
                             </Button>
 
-                            {/* Output Section */}
+                            {/* Output */}
                             <div className="mt-4 p-3 rounded shadow-sm border bg-white">
                               <h6 className="fw-bold mb-2">
                                 <i className="bi bi-terminal me-2 text-primary"></i>{" "}
                                 Output
                               </h6>
-
                               <div
                                 className="p-3 rounded bg-light border"
                                 style={{
                                   minHeight: "120px",
+                                  overflowX: "auto",
+                                  wordBreak: "break-word", // 👈 fix for long lines
                                   whiteSpace: "pre-wrap",
                                   fontFamily: "monospace",
                                 }}
@@ -920,21 +984,35 @@ const handleSubmitExam = useCallback(
                     {/* Normal Q&A Exams */}
                     {examText && (
                       <div className="border rounded p-3 bg-light-subtle mb-3">
-                        <pre className="mb-0">{examText}</pre>
+                        <pre className="mb-0 text-break">{examText}</pre>
                       </div>
                     )}
 
                     {/* Questions */}
                     <div>
                       {questions.map((q, idx) => (
-                        <Card key={q.id} className="mb-4 shadow-sm border-0">
-                          <Card.Body>
+                        <Card
+                          key={q.id}
+                          className="mb-4 shadow-sm border-0"
+                          style={{
+                            borderRadius: "10px",
+                            overflow: "hidden",
+                          }}
+                        >
+                          <Card.Body className="p-3 p-md-4">
                             {/* Question Title */}
-                            <h6 className="fw-bold mb-3">
+                            <h6
+                              className="fw-bold mb-3 text-dark"
+                              style={{
+                                fontSize: "1rem",
+                                lineHeight: "1.4",
+                                wordBreak: "break-word",
+                              }}
+                            >
                               {idx + 1}. {q.question_text}
                             </h6>
 
-                            {/* MCQ */}
+                            {/* MCQ Type */}
                             {q.question_type === "mcq" && (
                               <Form>
                                 {q.options.map((opt) => (
@@ -943,12 +1021,16 @@ const handleSubmitExam = useCallback(
                                     type="radio"
                                     id={`q-${q.id}-opt-${opt.id}`}
                                     name={`q-${q.id}`}
-                                    label={opt.option_text}
+                                    label={
+                                      <span className="text-wrap">
+                                        {opt.option_text}
+                                      </span>
+                                    }
                                     checked={studentAnswers[q.id] === opt.id}
                                     onChange={() =>
                                       handleAnswerSelect(q.id, opt.id)
                                     }
-                                    className="mb-2 p-2 border rounded"
+                                    className="mb-2 p-2 border rounded text-break"
                                     style={{
                                       backgroundColor:
                                         studentAnswers[q.id] === opt.id
@@ -959,13 +1041,14 @@ const handleSubmitExam = useCallback(
                                           ? "#0d6efd"
                                           : "#dee2e6",
                                       cursor: "pointer",
+                                      wordWrap: "break-word",
                                     }}
                                   />
                                 ))}
                               </Form>
                             )}
 
-                            {/* Identification */}
+                            {/* Identification Type */}
                             {q.question_type === "identification" && (
                               <Form.Control
                                 type="text"
@@ -974,11 +1057,12 @@ const handleSubmitExam = useCallback(
                                 onChange={(e) =>
                                   handleAnswerSelect(q.id, e.target.value)
                                 }
-                                className="p-2 border rounded"
+                                className="p-2 border rounded mt-2 w-100"
+                                style={{ fontSize: "0.95rem" }}
                               />
                             )}
 
-                            {/* Essay */}
+                            {/* Essay Type */}
                             {q.question_type === "essay" && (
                               <Form.Control
                                 as="textarea"
@@ -988,7 +1072,12 @@ const handleSubmitExam = useCallback(
                                 onChange={(e) =>
                                   handleAnswerSelect(q.id, e.target.value)
                                 }
-                                className="p-2 border rounded"
+                                className="p-2 border rounded mt-2 w-100"
+                                style={{
+                                  fontSize: "0.95rem",
+                                  resize: "vertical",
+                                  minHeight: "120px",
+                                }}
                               />
                             )}
                           </Card.Body>
@@ -1044,15 +1133,32 @@ const handleSubmitExam = useCallback(
                 <Card.Header className="bg-dark text-white">
                   <i className="bi bi-camera-video me-2"></i> Live Camera
                 </Card.Header>
-                <Card.Body className="p-0 position-relative">
-                  <video
-                    ref={videoPreviewRef}
-                    autoPlay
-                    muted
-                    playsInline
-                    style={{ width: "100%", borderRadius: "0 0 0.5rem 0.5rem" }}
-                  />
+                <Card.Body className="p-0 position-relative d-flex justify-content-center align-items-center">
+                  <div
+                    className="camera-wrapper"
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      overflow: "hidden",
+                      position: "relative",
+                    }}
+                  >
+                    <video
+                      ref={videoPreviewRef}
+                      autoPlay
+                      muted
+                      playsInline
+                      className="w-100 h-auto"
+                      style={{
+                        objectFit: "cover",
+                        borderRadius: "0 0 0.5rem 0.5rem",
+                        transform: "rotate(0deg)",
+                        transition: "all 0.3s ease-in-out",
+                      }}
+                    />
+                  </div>
 
+                  {/* Loading Overlay */}
                   {isConnecting && (
                     <div
                       className="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center bg-dark bg-opacity-75 text-white rounded-bottom"
@@ -1072,6 +1178,7 @@ const handleSubmitExam = useCallback(
                     </div>
                   )}
 
+                  {/* Overlay Text */}
                   <div
                     ref={overlayRef}
                     className="position-absolute top-0 start-0 m-2 px-2 py-1 rounded text-white small"

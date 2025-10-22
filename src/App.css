@@ -102,6 +102,17 @@ button:hover .hamburger-icon span:nth-child(3) {
   color: #61dafb;
 }
 
+.camera-wrapper video {
+  transform-origin: center center;
+}
+
+@media (max-width: 768px) and (orientation: portrait) {
+  .camera-wrapper video {
+    transform: rotate(90deg);
+    object-fit: cover;
+  }
+}
+
 @keyframes App-logo-spin {
   from {
     transform: rotate(0deg);
@@ -109,4 +120,35 @@ button:hover .hamburger-icon span:nth-child(3) {
   to {
     transform: rotate(360deg);
   }
+}
+@media (max-width: 576px) {
+  .card-body {
+    padding: 1rem !important;
+  }
+  .form-check {
+    font-size: 0.9rem;
+  }
+  .form-control {
+    font-size: 0.9rem;
+  }
+  pre {
+    font-size: 0.9rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+}
+
+.camera-wrapper video {
+  transform-origin: center center;
+}
+
+@media (max-width: 768px) and (orientation: portrait) {
+  .camera-wrapper video {
+    transform: rotate(90deg);
+    object-fit: cover;
+  }
+}
+video {
+  transform-origin: center center;
+  transition: all 0.3s ease-in-out;
 }

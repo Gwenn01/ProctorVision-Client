@@ -563,20 +563,26 @@ const CreateExam = () => {
                     )}
                   </div>
 
-                  <Form.Group controlId="examCategory">
-                    <Form.Label className="fw-semibold">Format</Form.Label>
-                    {/* Keep values aligned with backend expectations: "MCQ" | "CODING" */}
+                  <Form.Group controlId="examCategory" className="mb-4">
+                    <Form.Label className="fw-semibold mb-2">Format</Form.Label>
+
                     <Form.Select
                       value={examCategory}
                       onChange={(e) => setExamCategory(e.target.value)}
                       disabled={loading}
                       className="w-100"
+                      style={{
+                        minWidth: "200px",
+                        maxWidth: "100%",
+                      }}
                     >
                       <option value="">— Select format —</option>
                       <option value="CODING">Coding (Instructions Only)</option>
                       <option value="QA">QA (Questions & Answers)</option>
                     </Form.Select>
-                    <div className="form-text mt-2">
+
+                    {/* Responsive info text */}
+                    <div className="form-text mt-3 text-muted text-center text-sm-start">
                       {examCategory === "QA" && (
                         <>You’ll create multiple-choice questions below.</>
                       )}

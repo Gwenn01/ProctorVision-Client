@@ -77,7 +77,7 @@ const Sidebar = ({ role }) => {
       {!show && (
         <Button
           variant="dark"
-          className="d-md-none position-fixed top-3 start-3 border-0 shadow-lg rounded-circle"
+          className="d-md-none position-fixed border-0 shadow-lg rounded-circle"
           style={{
             zIndex: 1060,
             width: "46px",
@@ -87,6 +87,8 @@ const Sidebar = ({ role }) => {
             justifyContent: "center",
             alignItems: "center",
             transition: "all 0.3s ease-in-out",
+            top: "10px", // ⬆️ Move up (was 20–30px)
+            left: "8px", // ⬅️ Move a bit more left
           }}
           onClick={() => setShow(true)}
         >
