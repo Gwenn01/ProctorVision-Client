@@ -33,12 +33,7 @@ const Dashboard = () => {
     <Container fluid>
       <Row className="flex-nowrap">
         {/* Sidebar */}
-        <Col
-          xs="auto"
-          md={3}
-          xl={2}
-          className="px-sm-2 px-0 bg-dark text-white min-vh-100"
-        >
+        <Col xs="auto" md={3} xl={2} className="px-0">
           <button
             className="btn btn-outline-light d-md-none m-3"
             onClick={() => setIsOpen(!isOpen)}
@@ -49,7 +44,12 @@ const Dashboard = () => {
         </Col>
 
         {/* Main content */}
-        <Col className="py-3 px-4">
+        <Col
+          className="py-3 px-4"
+          style={{
+            marginLeft: window.innerWidth >= 768 ? "240px" : "0",
+          }}
+        >
           <Routes>
             {/* Public route (accessible without login) */}
             <Route path="/verify-success" element={<VerifySuccess />} />
