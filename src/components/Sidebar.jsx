@@ -22,9 +22,7 @@ const Sidebar = ({ role }) => {
         await api.post(
           "/api/logout",
           { student_id: user.id },
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
       } catch (error) {
         console.error("Logout API failed:", error);
@@ -75,17 +73,32 @@ const Sidebar = ({ role }) => {
 
   return (
     <>
-      {/* ✅ Hamburger toggle (mobile only) */}
-      <Button
-        variant="dark"
-        className="d-md-none position-fixed top-2 start-2 rounded-circle shadow-sm"
-        style={{ zIndex: 1050, width: "42px", height: "42px" }}
-        onClick={() => setShow(true)}
-      >
-        <i className="bi bi-list fs-4"></i>
-      </Button>
+      {/* ✅ Professional Floating Hamburger Toggle (mobile only) */}
+      {!show && (
+        <Button
+          variant="dark"
+          className="d-md-none position-fixed top-3 start-3 border-0 shadow-lg rounded-circle"
+          style={{
+            zIndex: 1060,
+            width: "46px",
+            height: "46px",
+            backgroundColor: "#212529",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            transition: "all 0.3s ease-in-out",
+          }}
+          onClick={() => setShow(true)}
+        >
+          <div className="hamburger-icon">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </Button>
+      )}
 
-      {/* ✅ Sidebar (desktop only) */}
+      {/* ✅ Sidebar for Desktop */}
       <div
         className="d-none d-md-flex flex-column text-white p-3 bg-dark"
         style={{
@@ -107,15 +120,22 @@ const Sidebar = ({ role }) => {
         />
       </div>
 
-      {/* ✅ Offcanvas (when hamburger clicked) */}
+      {/* ✅ Offcanvas for Mobile */}
       <Offcanvas
         show={show}
         onHide={() => setShow(false)}
-        className="bg-dark text-white"
         placement="start"
+        className="bg-dark text-white shadow-lg"
+        style={{ width: "260px" }}
       >
-        <Offcanvas.Header closeButton closeVariant="white">
-          <Offcanvas.Title>{panelTitle}</Offcanvas.Title>
+        <Offcanvas.Header
+          closeButton
+          closeVariant="white"
+          className="border-bottom border-secondary"
+        >
+          <Offcanvas.Title className="fw-semibold text-white">
+            {panelTitle}
+          </Offcanvas.Title>
         </Offcanvas.Header>
         <Offcanvas.Body>
           <SidebarContent
@@ -141,9 +161,15 @@ const SidebarContent = ({
   onClose,
 }) => (
   <>
-    {/* Logo and title */}
+    {/* Logo & Title */}
     <div className="text-center mb-3">
-      <img src={logo} alt="Logo" width="60" height="60" className="mb-2" />
+      <img
+        src={logo}
+        alt="Logo"
+        width="70"
+        height="70"
+        className="mb-2 rounded-circle border border-light p-1"
+      />
       <h5 className="fw-bold mb-1">{panelTitle}</h5>
       <div className="d-flex justify-content-center align-items-center gap-1">
         <i className="bi bi-person-circle fs-5"></i>
@@ -153,8 +179,8 @@ const SidebarContent = ({
       </div>
     </div>
 
-    {/* Nav links */}
-    <Nav className="flex-column gap-2">
+    {/* Navigation Links */}
+    <Nav className="flex-column gap-2 mt-3">
       {links.map((link, index) => (
         <Nav.Item key={index}>
           <Link
@@ -162,6 +188,7 @@ const SidebarContent = ({
             className={`nav-link text-white d-flex align-items-center px-3 py-2 rounded ${
               location.pathname.includes(link.href) ? "bg-primary" : ""
             }`}
+            style={{ transition: "all 0.2s" }}
             onClick={onClose}
           >
             <i className={`bi bi-${link.icon} me-2 fs-5`}></i>
@@ -171,13 +198,17 @@ const SidebarContent = ({
       ))}
     </Nav>
 
-    {/* Logout */}
-    <div className="mt-auto pt-3">
+    {/* Logout Button */}
+    <div className="mt-auto pt-4">
       <Nav.Item>
         <span
           role="button"
           onClick={handleLogout}
-          className="nav-link text-white d-flex align-items-center px-3 py-2 rounded bg-danger bg-opacity-75"
+          className="nav-link d-flex align-items-center justify-content-center text-white fw-semibold rounded py-2"
+          style={{
+            backgroundColor: "#dc3545",
+            transition: "background 0.3s ease",
+          }}
         >
           <i className="bi bi-box-arrow-right me-2 fs-5"></i> Logout
         </span>
