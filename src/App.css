@@ -137,6 +137,16 @@ button:hover .hamburger-icon span:nth-child(3) {
     word-break: break-word;
   }
 }
+@media (max-width: 576px) {
+  select.form-select {
+    font-size: 0.9rem !important;
+    padding: 0.5rem !important;
+  }
+  .form-text {
+    font-size: 0.85rem !important;
+    text-align: center !important;
+  }
+}
 
 .camera-wrapper video {
   transform-origin: center center;

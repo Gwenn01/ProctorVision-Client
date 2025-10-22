@@ -564,16 +564,28 @@ const CreateExam = () => {
                   </div>
 
                   <Form.Group controlId="examCategory" className="mb-4">
-                    <Form.Label className="fw-semibold mb-2">Format</Form.Label>
+                    {/* Label */}
+                    <Form.Label
+                      className="fw-semibold mb-2 text-dark"
+                      style={{
+                        fontSize: "1rem",
+                        display: "block",
+                        textAlign: "start",
+                      }}
+                    >
+                      Format
+                    </Form.Label>
 
+                    {/* Dropdown */}
                     <Form.Select
                       value={examCategory}
                       onChange={(e) => setExamCategory(e.target.value)}
                       disabled={loading}
-                      className="w-100"
+                      className="shadow-sm border rounded w-100"
                       style={{
-                        minWidth: "200px",
-                        maxWidth: "100%",
+                        minWidth: "100%",
+                        fontSize: "0.95rem",
+                        padding: "0.6rem",
                       }}
                     >
                       <option value="">— Select format —</option>
@@ -581,8 +593,16 @@ const CreateExam = () => {
                       <option value="QA">QA (Questions & Answers)</option>
                     </Form.Select>
 
-                    {/* Responsive info text */}
-                    <div className="form-text mt-3 text-muted text-center text-sm-start">
+                    {/* Info text */}
+                    <div
+                      className="form-text mt-2 text-muted text-center text-md-start"
+                      style={{
+                        fontSize: "0.9rem",
+                        lineHeight: "1.4",
+                        wordWrap: "break-word",
+                        whiteSpace: "normal",
+                      }}
+                    >
                       {examCategory === "QA" && (
                         <>You’ll create multiple-choice questions below.</>
                       )}
