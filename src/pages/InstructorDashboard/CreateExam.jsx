@@ -695,8 +695,9 @@ const CreateExam = () => {
                               {q.options.map((opt, oIndex) => (
                                 <div
                                   key={oIndex}
-                                  className="d-flex align-items-center mb-2 gap-2"
+                                  className="d-flex flex-column flex-sm-row align-items-start align-items-sm-center mb-2 gap-2"
                                 >
+                                  {/* Option Input */}
                                   <Form.Control
                                     type="text"
                                     placeholder={`Option ${oIndex + 1}`}
@@ -713,21 +714,29 @@ const CreateExam = () => {
                                     }
                                     disabled={loading}
                                   />
-                                  <Form.Check
-                                    type="radio"
-                                    name={`correct-${qIndex}`}
-                                    checked={q.correctAnswer === oIndex}
-                                    onChange={() =>
-                                      selectCorrectAnswer(qIndex, oIndex)
-                                    }
-                                    label="Correct"
-                                    disabled={loading}
-                                  />
+
+                                  {/* Correct Answer Selector */}
+                                  <div className="d-flex align-items-center">
+                                    <Form.Check
+                                      type="radio"
+                                      name={`correct-${qIndex}`}
+                                      checked={q.correctAnswer === oIndex}
+                                      onChange={() =>
+                                        selectCorrectAnswer(qIndex, oIndex)
+                                      }
+                                      label="Correct"
+                                      disabled={loading}
+                                      className="ms-sm-2"
+                                    />
+                                  </div>
+
+                                  {/* Remove Button */}
                                   <Button
                                     size="sm"
                                     variant="outline-danger"
                                     onClick={() => removeOption(qIndex, oIndex)}
                                     disabled={loading || q.options.length <= 2}
+                                    className="mt-1 mt-sm-0"
                                   >
                                     <i className="bi bi-x-circle"></i>
                                   </Button>
@@ -754,22 +763,23 @@ const CreateExam = () => {
                           )}
 
                           {q.type === "essay" && (
-                            <p className="text-muted">
+                            <p className="text-muted mb-3">
                               Essay question – students will write their answer
                               manually.
                             </p>
                           )}
 
-                          {/* ✅ Unified footer row */}
-                          <div className="d-flex justify-content-between align-items-center mt-3">
-                            {/* Left side only for MCQ */}
+                          {/* ✅ Unified Footer Row */}
+                          <div className="d-flex flex-column flex-sm-row justify-content-between align-items-stretch align-items-sm-center mt-3 gap-2">
+                            {/* Left (MCQ only) */}
                             {q.type === "mcq" && (
-                              <div className="d-flex gap-2">
+                              <div className="d-flex flex-column flex-sm-row gap-2">
                                 <Button
                                   size="sm"
                                   variant="outline-primary"
                                   onClick={() => addOption(qIndex)}
                                   disabled={loading}
+                                  className="w-100 w-sm-auto"
                                 >
                                   <i className="bi bi-plus-circle me-1"></i> Add
                                   Option
@@ -780,6 +790,7 @@ const CreateExam = () => {
                                   variant="outline-secondary"
                                   onClick={() => clearCorrectAnswer(qIndex)}
                                   disabled={loading || q.correctAnswer === null}
+                                  className="w-100 w-sm-auto"
                                 >
                                   <i className="bi bi-eraser me-1"></i> Clear
                                   Correct
@@ -787,12 +798,13 @@ const CreateExam = () => {
                               </div>
                             )}
 
-                            {/* Right side always = Delete */}
+                            {/* Right (Always show) */}
                             <Button
                               size="sm"
                               variant="outline-danger"
                               onClick={() => removeQuestion(qIndex)}
                               disabled={loading}
+                              className="w-100 w-sm-auto"
                             >
                               <i className="bi bi-trash me-1"></i> Delete
                               Question

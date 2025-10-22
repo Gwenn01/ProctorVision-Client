@@ -203,10 +203,16 @@ const ManageExam = () => {
   };
 
   const renderTable = (items, type) => (
-    <Card className="shadow-sm border-0 p-3">
+    <Card className="shadow-sm border-0 p-3 mt-3">
       <div className="table-responsive">
-        <Table striped bordered hover className="align-middle mb-0">
-          <thead className="table-dark text-center">
+        <Table
+          striped
+          bordered
+          hover
+          responsive="sm"
+          className="align-middle text-center mb-0"
+        >
+          <thead className="table-dark text-nowrap">
             <tr>
               <th>Title</th>
               <th>Description</th>
@@ -221,12 +227,37 @@ const ManageExam = () => {
             {items.length > 0 ? (
               items.map((exam) => (
                 <tr key={exam.id}>
-                  <td className="fw-semibold">{exam.title}</td>
-                  <td>{exam.description}</td>
-                  <td>{exam.duration_minutes} min</td>
-                  <td>{exam.exam_date}</td>
-                  <td>{exam.start_time}</td>
-                  <td>
+                  <td
+                    className="fw-semibold text-truncate"
+                    style={{
+                      maxWidth: "140px",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                    title={exam.title}
+                  >
+                    {exam.title}
+                  </td>
+
+                  <td
+                    className="text-truncate"
+                    style={{
+                      maxWidth: "200px",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                    title={exam.description}
+                  >
+                    {exam.description || "—"}
+                  </td>
+
+                  <td className="text-nowrap">{exam.duration_minutes} min</td>
+                  <td className="text-nowrap">{exam.exam_date}</td>
+                  <td className="text-nowrap">{exam.start_time}</td>
+
+                  <td className="text-nowrap">
                     {exam.exam_file ? (
                       <a
                         href={`${
@@ -241,11 +272,13 @@ const ManageExam = () => {
                       "—"
                     )}
                   </td>
+
                   <td className="text-center">
-                    <div className="d-flex justify-content-center gap-2">
+                    <div className="d-flex flex-column flex-sm-row justify-content-center gap-2">
                       <Button
                         variant="info"
                         size="sm"
+                        className="text-white px-3 w-100 w-sm-auto"
                         onClick={() => handleViewExam(exam)}
                       >
                         <i className="bi bi-eye me-1"></i> View
@@ -254,6 +287,7 @@ const ManageExam = () => {
                       <Button
                         variant="danger"
                         size="sm"
+                        className="px-3 w-100 w-sm-auto"
                         onClick={() => handleDeleteExam(exam)}
                       >
                         <i className="bi bi-trash me-1"></i> Delete
@@ -264,7 +298,7 @@ const ManageExam = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="7" className="text-center text-muted">
+                <td colSpan="7" className="text-center text-muted py-4">
                   No {type.toLowerCase()}s found.
                 </td>
               </tr>

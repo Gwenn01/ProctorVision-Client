@@ -44,6 +44,23 @@ button:hover .hamburger-icon span:nth-child(3) {
   animation: slideIn 0.3s ease-in-out;
 }
 
+@media (max-width: 576px) {
+  table th,
+  table td {
+    font-size: 0.9rem;
+    vertical-align: middle !important;
+  }
+
+  td.text-truncate {
+    max-width: 120px !important;
+  }
+
+  .btn {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.75rem;
+  }
+}
+
 @keyframes slideIn {
   from {
     transform: translateX(-100%);

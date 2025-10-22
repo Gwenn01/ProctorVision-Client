@@ -351,10 +351,10 @@ const ManageStudentEnroll = ({ instructorId }) => {
               >
                 <thead className="table-dark">
                   <tr>
-                    <th>Course</th>
-                    <th>Year</th>
-                    <th>Section</th>
-                    <th>Actions</th>
+                    <th style={{ whiteSpace: "nowrap" }}>Course</th>
+                    <th style={{ whiteSpace: "nowrap" }}>Year</th>
+                    <th style={{ whiteSpace: "nowrap" }}>Section</th>
+                    <th style={{ whiteSpace: "nowrap" }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -368,16 +368,27 @@ const ManageStudentEnroll = ({ instructorId }) => {
                       })
                       .map((group, idx) => (
                         <tr key={idx}>
-                          <td className="text-break">{group.course}</td>
-                          <td>{group.year}</td>
-                          <td>{group.section}</td>
+                          <td
+                            className="text-truncate px-2"
+                            style={{
+                              maxWidth: "180px",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                            title={group.course} // show full name on hover
+                          >
+                            {group.course}
+                          </td>
+                          <td className="px-2">{group.year}</td>
+                          <td className="px-2">{group.section}</td>
                           <td className="text-center">
                             {/* ✅ Stack buttons vertically on mobile */}
                             <div className="d-flex flex-column flex-sm-row justify-content-center gap-2">
                               <Button
                                 variant="info"
                                 size="sm"
-                                className="text-white px-3"
+                                className="text-white px-3 w-100 w-sm-auto"
                                 onClick={() => setSelectedGroupView(group)}
                                 title="View assigned students"
                               >
@@ -387,7 +398,7 @@ const ManageStudentEnroll = ({ instructorId }) => {
                               <Button
                                 variant="danger"
                                 size="sm"
-                                className="px-3"
+                                className="px-3 w-100 w-sm-auto"
                                 onClick={() => handleBulkUnassign(group)}
                                 title="Remove this group assignment"
                               >
