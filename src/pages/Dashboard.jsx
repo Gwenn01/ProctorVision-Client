@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Container, Row, Col } from "react-bootstrap";
 import { Routes, Route } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
@@ -8,7 +8,6 @@ import CreateAccount from "./AdminDashboard/CreateAccount";
 import ManageAccount from "./AdminDashboard/ManageAccount";
 import ManageAdminExam from "./AdminDashboard/ManageExam";
 import ManageBehavior from "./AdminDashboard/ManageBehavior";
-// gmail verification
 import VerifySuccess from "./VerifySuccess";
 
 // Instructor Pages
@@ -19,39 +18,40 @@ import StudentBehavior from "./InstructorDashboard/StudentBehavior";
 
 // Student Pages
 import TakeExam from "./StudentDashboard/TakeExam";
-//import YourBehavior from "./StudentDashboard/YourBehavior";
 
 const Dashboard = () => {
   const userData = JSON.parse(localStorage.getItem("userData") || "{}");
   const role = userData.role || "Student";
   const instructorId = userData.id || null;
 
-  // Toggle state for small screens
-  const [isOpen, setIsOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // Update when resizing
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   return (
-    <Container fluid>
-      <Row className="flex-nowrap">
+    <Container fluid className="p-0 bg-white">
+      <Row className="g-0">
         {/* Sidebar */}
-        <Col xs="auto" md={3} xl={2} className="px-0">
-          <button
-            className="btn btn-outline-light d-md-none m-3"
-            onClick={() => setIsOpen(!isOpen)}
-          >
-            ☰ Menu
-          </button>
-          {isOpen && <Sidebar role={role} />}
-        </Col>
+        <Sidebar role={role} />
 
         {/* Main content */}
         <Col
           className="py-3 px-4"
           style={{
-            marginLeft: window.innerWidth >= 768 ? "240px" : "0",
+            // remove margin on mobile, apply margin on desktop
+            marginLeft: isMobile ? "0" : "240px",
+            width: isMobile ? "100%" : "calc(100% - 240px)",
+            minHeight: "100vh",
+            backgroundColor: "#fff",
           }}
         >
           <Routes>
-            {/* Public route (accessible without login) */}
+            {/* Public route */}
             <Route path="/verify-success" element={<VerifySuccess />} />
 
             {/* Admin Routes */}
