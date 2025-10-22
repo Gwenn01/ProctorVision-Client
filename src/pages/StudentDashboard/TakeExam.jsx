@@ -65,11 +65,6 @@ const TakeExam = () => {
 
   const [detectionCount, setDetectionCount] = useState(0);
 
-  // api debugger
-  useEffect(() => {
-    console.log("AI Base URL = ", apiAI.defaults.baseURL);
-  }, []);
-
   // ---- helpers: one-shot beep (audio element first, then Web Audio fallback) ----
   const playBeep = useCallback(async () => {
     if (beepRef.current) {
