@@ -22,7 +22,9 @@ const Sidebar = ({ role }) => {
         await api.post(
           "/api/logout",
           { student_id: user.id },
-          { headers: { Authorization: `Bearer ${token}` } }
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
         );
       } catch (error) {
         console.error("Logout API failed:", error);
@@ -73,18 +75,19 @@ const Sidebar = ({ role }) => {
 
   return (
     <>
-      {/* Toggle Button (visible only on mobile) */}
+      {/* ✅ Hamburger toggle (mobile only) */}
       <Button
         variant="dark"
-        className="d-md-none position-fixed top-0 start-0 m-3 z-3"
+        className="d-md-none position-fixed top-2 start-2 rounded-circle shadow-sm"
+        style={{ zIndex: 1050, width: "42px", height: "42px" }}
         onClick={() => setShow(true)}
       >
         <i className="bi bi-list fs-4"></i>
       </Button>
 
-      {/* Sidebar for large screens */}
+      {/* ✅ Sidebar (desktop only) */}
       <div
-        className="d-none d-md-flex flex-column text-white p-3 gap-3 bg-dark"
+        className="d-none d-md-flex flex-column text-white p-3 bg-dark"
         style={{
           position: "fixed",
           top: 0,
@@ -104,11 +107,12 @@ const Sidebar = ({ role }) => {
         />
       </div>
 
-      {/* Offcanvas for mobile */}
+      {/* ✅ Offcanvas (when hamburger clicked) */}
       <Offcanvas
         show={show}
         onHide={() => setShow(false)}
         className="bg-dark text-white"
+        placement="start"
       >
         <Offcanvas.Header closeButton closeVariant="white">
           <Offcanvas.Title>{panelTitle}</Offcanvas.Title>
@@ -139,12 +143,7 @@ const SidebarContent = ({
   <>
     {/* Logo and title */}
     <div className="text-center mb-3">
-      <img
-        src={logo}
-        alt="Logo"
-        style={{ width: "60px", height: "60px" }}
-        className="mb-2"
-      />
+      <img src={logo} alt="Logo" width="60" height="60" className="mb-2" />
       <h5 className="fw-bold mb-1">{panelTitle}</h5>
       <div className="d-flex justify-content-center align-items-center gap-1">
         <i className="bi bi-person-circle fs-5"></i>
@@ -154,7 +153,7 @@ const SidebarContent = ({
       </div>
     </div>
 
-    {/* Navigation Links */}
+    {/* Nav links */}
     <Nav className="flex-column gap-2">
       {links.map((link, index) => (
         <Nav.Item key={index}>

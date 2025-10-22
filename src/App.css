@@ -2,6 +2,16 @@ body,
 .container-fluid {
   background-color: #fff !important;
 }
+body {
+  background-color: #fff !important;
+  overflow-x: hidden;
+}
+
+button.btn-dark.position-fixed {
+  top: 12px !important;
+  left: 12px !important;
+}
+
 .App {
   text-align: center;
 }
