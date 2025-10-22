@@ -13,7 +13,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Spinner from "../../components/Spinner";
 import { Modal } from "react-bootstrap";
-import api from "../../api"
+import api from "../../api";
 
 const ManageStudentEnroll = ({ instructorId }) => {
   const [groupedEnrolled, setGroupedEnrolled] = useState([]);
@@ -41,7 +41,7 @@ const ManageStudentEnroll = ({ instructorId }) => {
   const fetchEnrolledStudents = useCallback(async () => {
     try {
       setLoading(true);
-     const res = await api.get(`/api/enrolled-students/${instructorId}`);
+      const res = await api.get(`/api/enrolled-students/${instructorId}`);
       groupStudents(res.data);
     } catch (err) {
       toast.error("Failed to load enrolled students.");
@@ -120,7 +120,7 @@ const ManageStudentEnroll = ({ instructorId }) => {
     }
     try {
       setAssigning(true);
-     const res = await api.post("/api/assign-students-group", {
+      const res = await api.post("/api/assign-students-group", {
         instructor_id: instructorId,
         course: selectedCourse,
         section: selectedSection,
@@ -336,9 +336,19 @@ const ManageStudentEnroll = ({ instructorId }) => {
       ) : (
         <Card className="shadow-sm border-0 mt-4">
           <Card.Body>
-            <h5 className="fw-semibold mb-3">Enrolled Students</h5>
+            <h5 className="fw-semibold mb-3 text-center text-md-start">
+              Enrolled Students
+            </h5>
+
+            {/* ✅ Responsive wrapper */}
             <div className="table-responsive">
-              <Table striped bordered hover>
+              <Table
+                striped
+                bordered
+                hover
+                responsive="sm"
+                className="align-middle text-center"
+              >
                 <thead className="table-dark">
                   <tr>
                     <th>Course</th>
@@ -351,35 +361,38 @@ const ManageStudentEnroll = ({ instructorId }) => {
                   {groupedEnrolled.length > 0 ? (
                     [...groupedEnrolled]
                       .sort((a, b) => {
-                        // Sort by year first (numerical comparison)
-                        if (a.year !== b.year) {
-                          return a.year - b.year;
-                        }
-                        // If year is the same, sort by section (alphabetically)
+                        // Sort by year first (numerical)
+                        if (a.year !== b.year) return a.year - b.year;
+                        // Sort by section alphabetically
                         return a.section.localeCompare(b.section);
                       })
                       .map((group, idx) => (
                         <tr key={idx}>
-                          <td>{group.course}</td>
+                          <td className="text-break">{group.course}</td>
                           <td>{group.year}</td>
                           <td>{group.section}</td>
                           <td className="text-center">
-                            <div className="d-flex justify-content-center gap-2">
+                            {/* ✅ Stack buttons vertically on mobile */}
+                            <div className="d-flex flex-column flex-sm-row justify-content-center gap-2">
                               <Button
                                 variant="info"
                                 size="sm"
+                                className="text-white px-3"
                                 onClick={() => setSelectedGroupView(group)}
                                 title="View assigned students"
                               >
-                                View Students
+                                <i className="bi bi-eye me-1"></i>
+                                View
                               </Button>
                               <Button
                                 variant="danger"
                                 size="sm"
+                                className="px-3"
                                 onClick={() => handleBulkUnassign(group)}
                                 title="Remove this group assignment"
                               >
-                                Remove Assign
+                                <i className="bi bi-trash me-1"></i>
+                                Remove
                               </Button>
                             </div>
                           </td>
@@ -387,7 +400,7 @@ const ManageStudentEnroll = ({ instructorId }) => {
                       ))
                   ) : (
                     <tr>
-                      <td colSpan="4" className="text-center text-muted">
+                      <td colSpan="4" className="text-center text-muted py-4">
                         No assigned groups found.
                       </td>
                     </tr>

@@ -168,8 +168,9 @@ const SidebarContent = ({
         alt="Logo"
         width="70"
         height="70"
-        className="mb-2 rounded-circle border border-light p-1"
+        className="mb-2 rounded-circle"
       />
+
       <h5 className="fw-bold mb-1">{panelTitle}</h5>
       <div className="d-flex justify-content-center align-items-center gap-1">
         <i className="bi bi-person-circle fs-5"></i>
