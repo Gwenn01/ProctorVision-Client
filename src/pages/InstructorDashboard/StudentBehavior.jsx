@@ -183,11 +183,6 @@ const StudentBehavior = () => {
             Swal.fire({
               title: "🚨 Suspicious Alert!",
               text: `${student.name} was detected ${label}.`,
-              imageUrl: res.data?.image_base64
-                ? `data:image/jpeg;base64,${res.data.image_base64}`
-                : null, // Optional if your backend sends a base64 image
-              imageWidth: 250,
-              imageAlt: "Suspicious Frame",
               background: "#1e1e1e",
               color: "#fff",
               confirmButtonColor: "#d33",
