@@ -342,18 +342,33 @@ const ManageStudentEnroll = ({ instructorId }) => {
 
             <div className="table-responsive">
               <Table
-                striped
                 bordered
                 hover
-                responsive="sm"
+                responsive="md"
                 className="align-middle text-center shadow-sm"
+                style={{
+                  borderRadius: "8px",
+                  overflow: "hidden",
+                  fontSize: "0.9rem",
+                }}
               >
-                <thead className="table-dark">
+                <thead
+                  className="table-dark"
+                  style={{
+                    fontSize: "0.9rem",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.5px",
+                  }}
+                >
                   <tr>
-                    <th style={{ whiteSpace: "nowrap" }}>Course</th>
-                    <th style={{ whiteSpace: "nowrap" }}>Year</th>
-                    <th style={{ whiteSpace: "nowrap" }}>Section</th>
-                    <th style={{ width: "160px", whiteSpace: "nowrap" }}>
+                    <th style={{ width: "35%", whiteSpace: "nowrap" }}>
+                      Course
+                    </th>
+                    <th style={{ width: "20%", whiteSpace: "nowrap" }}>Year</th>
+                    <th style={{ width: "20%", whiteSpace: "nowrap" }}>
+                      Section
+                    </th>
+                    <th style={{ width: "25%", whiteSpace: "nowrap" }}>
                       Actions
                     </th>
                   </tr>
@@ -369,56 +384,57 @@ const ManageStudentEnroll = ({ instructorId }) => {
                       .map((group, idx) => (
                         <tr key={idx}>
                           <td
-                            className="px-3 fw-semibold text-secondary"
-                            title={group.course}
+                            className="px-3 text-secondary fw-semibold"
                             style={{
-                              maxWidth: "200px",
+                              maxWidth: "220px",
                               whiteSpace: "nowrap",
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                             }}
+                            title={group.course}
                           >
                             {group.course}
                           </td>
-                          <td className="px-2">{group.year}</td>
-                          <td className="px-2">{group.section}</td>
-
+                          <td>{group.year}</td>
+                          <td>{group.section}</td>
                           <td className="text-center align-middle">
-                            {/* ✅ Sleek button styling */}
+                            {/* ✅ Compact responsive actions */}
                             <div
-                              className="d-flex justify-content-center gap-2 flex-wrap"
-                              style={{ minWidth: "140px" }}
+                              className="d-flex justify-content-center align-items-center gap-2 flex-wrap"
+                              style={{ minWidth: "120px" }}
                             >
                               <Button
                                 variant="outline-info"
                                 size="sm"
-                                className="d-flex align-items-center justify-content-center gap-1 px-3 py-1 shadow-sm"
+                                className="d-flex align-items-center justify-content-center gap-1 px-2 py-1 shadow-sm"
                                 style={{
                                   borderRadius: "6px",
                                   fontWeight: "500",
                                   transition: "0.2s",
+                                  width: "80px",
                                 }}
                                 onClick={() => setSelectedGroupView(group)}
                                 title="View assigned students"
                               >
                                 <i className="bi bi-eye"></i>
-                                <span>View</span>
+                                View
                               </Button>
 
                               <Button
                                 variant="outline-danger"
                                 size="sm"
-                                className="d-flex align-items-center justify-content-center gap-1 px-3 py-1 shadow-sm"
+                                className="d-flex align-items-center justify-content-center gap-1 px-2 py-1 shadow-sm"
                                 style={{
                                   borderRadius: "6px",
                                   fontWeight: "500",
                                   transition: "0.2s",
+                                  width: "80px",
                                 }}
                                 onClick={() => handleBulkUnassign(group)}
                                 title="Remove this group assignment"
                               >
                                 <i className="bi bi-trash"></i>
-                                <span>Remove</span>
+                                Remove
                               </Button>
                             </div>
                           </td>
