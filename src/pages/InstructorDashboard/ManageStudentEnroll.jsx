@@ -373,7 +373,6 @@ const ManageStudentEnroll = ({ instructorId }) => {
                     </th>
                   </tr>
                 </thead>
-
                 <tbody>
                   {groupedEnrolled.length > 0 ? (
                     [...groupedEnrolled]
@@ -398,43 +397,40 @@ const ManageStudentEnroll = ({ instructorId }) => {
                           <td>{group.year}</td>
                           <td>{group.section}</td>
                           <td className="text-center align-middle">
-                            {/* ✅ Compact responsive actions */}
                             <div
                               className="d-flex justify-content-center align-items-center gap-2 flex-wrap"
-                              style={{ minWidth: "120px" }}
+                              style={{ minWidth: "150px" }}
                             >
                               <Button
                                 variant="outline-info"
                                 size="sm"
-                                className="d-flex align-items-center justify-content-center gap-1 px-2 py-1 shadow-sm"
+                                className="d-flex align-items-center justify-content-center gap-1 px-3 py-1 shadow-sm"
                                 style={{
                                   borderRadius: "6px",
                                   fontWeight: "500",
                                   transition: "0.2s",
-                                  width: "80px",
+                                  whiteSpace: "nowrap", // ✅ prevents text wrapping
                                 }}
                                 onClick={() => setSelectedGroupView(group)}
                                 title="View assigned students"
                               >
-                                <i className="bi bi-eye"></i>
-                                View
+                                <i className="bi bi-eye"></i> View
                               </Button>
 
                               <Button
                                 variant="outline-danger"
                                 size="sm"
-                                className="d-flex align-items-center justify-content-center gap-1 px-2 py-1 shadow-sm"
+                                className="d-flex align-items-center justify-content-center gap-1 px-3 py-1 shadow-sm"
                                 style={{
                                   borderRadius: "6px",
                                   fontWeight: "500",
                                   transition: "0.2s",
-                                  width: "80px",
+                                  whiteSpace: "nowrap", // ✅ prevents wrapping
                                 }}
                                 onClick={() => handleBulkUnassign(group)}
                                 title="Remove this group assignment"
                               >
-                                <i className="bi bi-trash"></i>
-                                Remove
+                                <i className="bi bi-trash"></i> Remove
                               </Button>
                             </div>
                           </td>
