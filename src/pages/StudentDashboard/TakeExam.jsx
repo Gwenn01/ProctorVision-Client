@@ -31,8 +31,8 @@ const TakeExam = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [warningMessage, setWarningMessage] = useState("");
   const [showWarning, setShowWarning] = useState(false);
-  const [showCapturedModal, setShowCapturedModal] = useState(false);
-  const [classifiedLogs, setClassifiedLogs] = useState([]);
+  //const [showCapturedModal, setShowCapturedModal] = useState(false);
+  // const [classifiedLogs, setClassifiedLogs] = useState([]);
   const [examText, setExamText] = useState("");
 
   // Local camera preview
@@ -455,7 +455,7 @@ const TakeExam = () => {
     });
 
     const logs = response.data.filter((log) => log.exam_id === selectedExam.id);
-    setClassifiedLogs(logs.reverse());
+    //setClassifiedLogs(logs.reverse());
   }, [selectedExam]);
 
   // Fetch questions when exam is selected
@@ -587,7 +587,7 @@ const TakeExam = () => {
         });
 
         await fetchBehaviorLogs();
-        setShowCapturedModal(true);
+        //setShowCapturedModal(true);
         toast.success("Behavior classification completed!");
       } catch (error) {
         console.error("Exam submission error:", error);
