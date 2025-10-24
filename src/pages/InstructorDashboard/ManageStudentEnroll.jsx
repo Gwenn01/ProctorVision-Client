@@ -340,14 +340,13 @@ const ManageStudentEnroll = ({ instructorId }) => {
               Enrolled Students
             </h5>
 
-            {/* ✅ Responsive wrapper */}
             <div className="table-responsive">
               <Table
                 striped
                 bordered
                 hover
                 responsive="sm"
-                className="align-middle text-center"
+                className="align-middle text-center shadow-sm"
               >
                 <thead className="table-dark">
                   <tr>
@@ -359,57 +358,67 @@ const ManageStudentEnroll = ({ instructorId }) => {
                     </th>
                   </tr>
                 </thead>
+
                 <tbody>
                   {groupedEnrolled.length > 0 ? (
                     [...groupedEnrolled]
                       .sort((a, b) => {
-                        // Sort by year first (numerical)
                         if (a.year !== b.year) return a.year - b.year;
-                        // Sort by section alphabetically
                         return a.section.localeCompare(b.section);
                       })
                       .map((group, idx) => (
                         <tr key={idx}>
                           <td
-                            className="text-truncate px-2"
+                            className="px-3 fw-semibold text-secondary"
+                            title={group.course}
                             style={{
-                              maxWidth: "180px",
+                              maxWidth: "200px",
                               whiteSpace: "nowrap",
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                             }}
-                            title={group.course} // show full name on hover
                           >
                             {group.course}
                           </td>
                           <td className="px-2">{group.year}</td>
                           <td className="px-2">{group.section}</td>
+
                           <td className="text-center align-middle">
-                            {/* ✅ Compact responsive action buttons */}
+                            {/* ✅ Sleek button styling */}
                             <div
-                              className="d-flex flex-column flex-sm-row justify-content-center gap-1"
-                              style={{ minWidth: "120px" }}
+                              className="d-flex justify-content-center gap-2 flex-wrap"
+                              style={{ minWidth: "140px" }}
                             >
                               <Button
-                                variant="info"
+                                variant="outline-info"
                                 size="sm"
-                                className="text-white px-2 py-1"
-                                style={{ minWidth: "65px" }}
+                                className="d-flex align-items-center justify-content-center gap-1 px-3 py-1 shadow-sm"
+                                style={{
+                                  borderRadius: "6px",
+                                  fontWeight: "500",
+                                  transition: "0.2s",
+                                }}
                                 onClick={() => setSelectedGroupView(group)}
                                 title="View assigned students"
                               >
-                                <i className="bi bi-eye me-1"></i> View
+                                <i className="bi bi-eye"></i>
+                                <span>View</span>
                               </Button>
 
                               <Button
-                                variant="danger"
+                                variant="outline-danger"
                                 size="sm"
-                                className="px-2 py-1"
-                                style={{ minWidth: "65px" }}
+                                className="d-flex align-items-center justify-content-center gap-1 px-3 py-1 shadow-sm"
+                                style={{
+                                  borderRadius: "6px",
+                                  fontWeight: "500",
+                                  transition: "0.2s",
+                                }}
                                 onClick={() => handleBulkUnassign(group)}
                                 title="Remove this group assignment"
                               >
-                                <i className="bi bi-trash me-1"></i> Remove
+                                <i className="bi bi-trash"></i>
+                                <span>Remove</span>
                               </Button>
                             </div>
                           </td>
