@@ -21,6 +21,7 @@ import {
 } from "react-icons/bs";
 import "react-toastify/dist/ReactToastify.css";
 import "./../../styles/indicatior.css";
+import Swal from "sweetalert2";
 import api from "../../api";
 
 const StudentBehavior = () => {
@@ -150,6 +151,59 @@ const StudentBehavior = () => {
     };
   }, [selectedExam, showCurrentExamModal]);
 
+  // notification for student capture behavior
+  // 🧠 NEW: Instructor real-time notification for cheating captures
+  useEffect(() => {
+    if (!showCurrentExamModal || !selectedExam || !students.length) return;
+
+    let interval;
+
+    const pollCheatingEvents = async () => {
+      try {
+        for (const student of students) {
+          const res = await api.get("/proctor/last_capture", {
+            params: {
+              student_id: student.student_id || student.id,
+              exam_id: selectedExam.id,
+            },
+          });
+
+          const { label, at } = res.data || {};
+          if (!label || !at) continue;
+
+          // Avoid duplicate notifications
+          const key = `${student.student_id || student.id}-${selectedExam.id}`;
+          const lastNotifiedAt = localStorage.getItem(`notified_${key}`);
+          if (!lastNotifiedAt || parseInt(lastNotifiedAt) < at) {
+            localStorage.setItem(`notified_${key}`, at);
+
+            toast.warning(`🚨 Suspicious: ${student.name} (${label})`);
+            // 🚨 SweetAlert2 popup
+            Swal.fire({
+              title: "🚨 Suspicious Alert!",
+              text: `${student.name} was detected ${label}.`,
+              imageUrl: res.data?.image_base64
+                ? `data:image/jpeg;base64,${res.data.image_base64}`
+                : null, // Optional if your backend sends a base64 image
+              imageWidth: 250,
+              imageAlt: "Suspicious Frame",
+              background: "#1e1e1e",
+              color: "#fff",
+              confirmButtonColor: "#d33",
+              timer: 5000, // auto close after 5 seconds
+              timerProgressBar: true,
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Polling error:", err.message);
+      }
+    };
+
+    interval = setInterval(pollCheatingEvents, 5000); // every 5 seconds
+    return () => clearInterval(interval);
+  }, [selectedExam, showCurrentExamModal, students]);
+
   const groupExams = () => {
     const now = new Date();
     const todayDateStr = now.toISOString().split("T")[0];
@@ -209,6 +263,7 @@ const StudentBehavior = () => {
       toast.error("Failed to load current exam/activity students");
     }
   };
+  // notification
 
   const handlePastExamClick = async (exam) => {
     setSelectedExam(exam);
