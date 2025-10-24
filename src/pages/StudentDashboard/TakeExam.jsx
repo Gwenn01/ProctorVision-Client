@@ -1188,7 +1188,7 @@ const TakeExam = () => {
         </Row>
       )}
 
-      {/* Captured Logs Modal */}
+      {/* Captured Logs Modal 
       <Modal
         show={showCapturedModal}
         onHide={() => setShowCapturedModal(false)}
@@ -1211,7 +1211,6 @@ const TakeExam = () => {
                   md={4}
                   className="mb-4 text-center"
                 >
-                  {/* Captured Image */}
                   {log.image_base64 && (
                     <img
                       src={`data:image/jpeg;base64,${log.image_base64}`}
@@ -1219,15 +1218,13 @@ const TakeExam = () => {
                       className="img-fluid rounded shadow-sm border mb-2"
                     />
                   )}
-
-                  {/* Warning type 
+ 
                   <div className="fw-semibold text-danger">
                     <i className="bi bi-exclamation-triangle me-1"></i>
                     Warning: {log.warning_type || "Unknown"}
                   </div>
-                  */}
 
-                  {/* Classification */}
+                 
                   <div
                     className={`fw-bold ${
                       log.classification_label === "Cheating"
@@ -1254,6 +1251,7 @@ const TakeExam = () => {
           </Button>
         </Modal.Footer>
       </Modal>
+      /*}
 
       {/* Exam Result Modal */}
       <Modal
