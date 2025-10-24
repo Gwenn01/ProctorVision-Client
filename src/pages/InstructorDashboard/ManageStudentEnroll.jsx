@@ -383,27 +383,26 @@ const ManageStudentEnroll = ({ instructorId }) => {
                           <td className="px-2">{group.year}</td>
                           <td className="px-2">{group.section}</td>
                           <td className="text-center">
-                            {/* ✅ Stack buttons vertically on mobile */}
-                            <div className="d-flex flex-column flex-sm-row justify-content-center gap-2">
+                            {/* ✅ Stack buttons on mobile, side by side on larger screens */}
+                            <div className="d-flex flex-column flex-sm-row justify-content-center align-items-center gap-2">
                               <Button
                                 variant="info"
                                 size="sm"
-                                className="text-white px-3 w-100 w-sm-auto"
+                                className="text-white px-3 flex-grow-0"
                                 onClick={() => setSelectedGroupView(group)}
                                 title="View assigned students"
                               >
-                                <i className="bi bi-eye me-1"></i>
-                                View
+                                <i className="bi bi-eye me-1"></i> View
                               </Button>
+
                               <Button
                                 variant="danger"
                                 size="sm"
-                                className="px-3 w-100 w-sm-auto"
+                                className="px-3 flex-grow-0"
                                 onClick={() => handleBulkUnassign(group)}
                                 title="Remove this group assignment"
                               >
-                                <i className="bi bi-trash me-1"></i>
-                                Remove
+                                <i className="bi bi-trash me-1"></i> Remove
                               </Button>
                             </div>
                           </td>
