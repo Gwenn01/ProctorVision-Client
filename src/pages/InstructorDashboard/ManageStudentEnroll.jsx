@@ -354,7 +354,9 @@ const ManageStudentEnroll = ({ instructorId }) => {
                     <th style={{ whiteSpace: "nowrap" }}>Course</th>
                     <th style={{ whiteSpace: "nowrap" }}>Year</th>
                     <th style={{ whiteSpace: "nowrap" }}>Section</th>
-                    <th style={{ whiteSpace: "nowrap" }}>Actions</th>
+                    <th style={{ width: "160px", whiteSpace: "nowrap" }}>
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -382,13 +384,17 @@ const ManageStudentEnroll = ({ instructorId }) => {
                           </td>
                           <td className="px-2">{group.year}</td>
                           <td className="px-2">{group.section}</td>
-                          <td className="text-center">
-                            {/* ✅ Stack buttons on mobile, side by side on larger screens */}
-                            <div className="d-flex flex-column flex-sm-row justify-content-center align-items-center gap-2">
+                          <td className="text-center align-middle">
+                            {/* ✅ Compact responsive action buttons */}
+                            <div
+                              className="d-flex flex-column flex-sm-row justify-content-center gap-1"
+                              style={{ minWidth: "120px" }}
+                            >
                               <Button
                                 variant="info"
                                 size="sm"
-                                className="text-white px-3 flex-grow-0"
+                                className="text-white px-2 py-1"
+                                style={{ minWidth: "65px" }}
                                 onClick={() => setSelectedGroupView(group)}
                                 title="View assigned students"
                               >
@@ -398,7 +404,8 @@ const ManageStudentEnroll = ({ instructorId }) => {
                               <Button
                                 variant="danger"
                                 size="sm"
-                                className="px-3 flex-grow-0"
+                                className="px-2 py-1"
+                                style={{ minWidth: "65px" }}
                                 onClick={() => handleBulkUnassign(group)}
                                 title="Remove this group assignment"
                               >
