@@ -23,6 +23,7 @@ import "react-toastify/dist/ReactToastify.css";
 import "./../../styles/indicatior.css";
 import Swal from "sweetalert2";
 import api from "../../api";
+import apiWebRTC from "../../apiWebRTC";
 
 const StudentBehavior = () => {
   const [exams, setExams] = useState([]);
@@ -161,7 +162,7 @@ const StudentBehavior = () => {
     const pollCheatingEvents = async () => {
       try {
         for (const student of students) {
-          const res = await api.get("/proctor/last_capture", {
+          const res = await apiWebRTC.get("/proctor/last_capture", {
             params: {
               student_id: student.student_id || student.id,
               exam_id: selectedExam.id,
