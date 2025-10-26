@@ -445,6 +445,38 @@ const TakeExam = () => {
     return () => clearInterval(t);
   }, [isTakingExam, selectedExam, lastCaptureAt, playBeep]);
 
+  // switchtab detection
+  useEffect(() => {
+    if (!isTakingExam || !selectedExam) return;
+
+    const userData = JSON.parse(localStorage.getItem("userData"));
+    const studentId = userData?.id;
+    const instructorId = selectedExam?.instructor_id;
+
+    const updateTabStatus = (isOtherTab) =>
+      api
+        .post("/api/update_tab_status", {
+          student_id: studentId,
+          instructor_id: instructorId,
+          is_other_tab: isOtherTab ? 1 : 0,
+        })
+        .catch(() => {});
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        toast.warning("⚠️ You switched to another tab!");
+        updateTabStatus(true);
+      } else {
+        toast.info("✅ You are back on the exam tab.");
+        updateTabStatus(false);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [isTakingExam, selectedExam]);
+
   // Fetch behavior logs after submitting
   const fetchBehaviorLogs = useCallback(async () => {
     const userData = JSON.parse(localStorage.getItem("userData"));
