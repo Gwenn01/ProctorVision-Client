@@ -516,6 +516,7 @@ const StudentBehavior = () => {
                   <th>Username</th>
                   <th>Login</th>
                   <th>Exam/Activity</th>
+                  <th>Other Tab</th>
                   <th className="text-center">Suspicious</th>
                   <th>Submitted</th>
                   <th className="text-center">Action</th>
@@ -540,6 +541,14 @@ const StudentBehavior = () => {
                         <span className="badge bg-secondary">No</span>
                       )}
                     </td>
+                    <td>
+                      {student.is_other_tab ? (
+                        <span className="badge bg-danger">Yes</span>
+                      ) : (
+                        <span className="badge bg-secondary">No</span>
+                      )}
+                    </td>
+
                     <td className="text-center">
                       {student.has_submitted ? (
                         <span className="badge bg-success">Submitted</span>
