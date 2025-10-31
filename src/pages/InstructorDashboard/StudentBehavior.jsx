@@ -19,6 +19,29 @@ import {
   BsExclamationTriangleFill,
   BsCpuFill,
 } from "react-icons/bs";
+import { Doughnut, Bar } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+} from "chart.js";
+
+// Register chart elements
+ChartJS.register(
+  ArcElement,
+  Tooltip,
+  Legend,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title
+);
+
 import "react-toastify/dist/ReactToastify.css";
 import "./../../styles/indicatior.css";
 import Swal from "sweetalert2";
@@ -44,6 +67,8 @@ const StudentBehavior = () => {
   const [loadingStudent, setLoadingStudent] = useState(null);
   const [loadingReview, setLoadingReview] = useState(null);
   const [loadingExamId, setLoadingExamId] = useState(null);
+  // logs
+  const [behaviorSummary, setBehaviorSummary] = useState(null);
 
   useEffect(() => {
     const fetchExams = async () => {
@@ -264,9 +289,20 @@ const StudentBehavior = () => {
   const handlePastExamClick = async (exam) => {
     setSelectedExam(exam);
     setSelectedStudent(null);
+    setLoading(true);
+
     try {
-      const res = await api.get(`/api/exam-behavior/${exam.id}`);
-      const sortedStudents = res.data.sort((a, b) => {
+      // ✅ Fetch all student behaviors for this exam
+      const res = await api.get(`/api/get_exam_behavior_summary`, {
+        params: { exam_id: exam.id },
+      });
+
+      const summary = res.data;
+      setBehaviorSummary(summary);
+
+      // ✅ Fetch detailed students list if needed
+      const resStudents = await api.get(`/api/exam-behavior/${exam.id}`);
+      const sortedStudents = resStudents.data.sort((a, b) => {
         const statusPriority = {
           Cheated: 0,
           Completed: 1,
@@ -274,11 +310,41 @@ const StudentBehavior = () => {
         };
         return statusPriority[a.exam_status] - statusPriority[b.exam_status];
       });
+
       setStudents(sortedStudents);
       setShowPastExamModal(true);
-    } catch {
+    } catch (error) {
+      console.error("Error loading behavior summary:", error);
       toast.error("Failed to load past exam/activity data");
+    } finally {
+      setLoading(false);
     }
+  };
+  // ✅ Prepare chart data dynamically
+  const donutData = {
+    labels: ["Cheating", "Completed", "Did Not Take"],
+    datasets: [
+      {
+        data: [
+          students.filter((s) => s.exam_status === "Cheated").length,
+          students.filter((s) => s.exam_status === "Completed").length,
+          students.filter((s) => s.exam_status === "Did Not Take Exam").length,
+        ],
+        backgroundColor: ["#dc3545", "#198754", "#6c757d"], // red, green, gray
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  const barData = {
+    labels: Object.keys(behaviorSummary?.behavior_counts || {}),
+    datasets: [
+      {
+        label: "Behavior Frequency",
+        data: Object.values(behaviorSummary?.behavior_counts || {}),
+        backgroundColor: "#0d6efd", // blue
+      },
+    ],
   };
 
   const handleStudentClick = async (student) => {
@@ -675,6 +741,36 @@ const StudentBehavior = () => {
                   </div>
                 </Col>
               </Row>
+              {/* ✅ Charts Section */}
+              {behaviorSummary && (
+                <Row className="mb-4">
+                  <Col md={6} className="text-center">
+                    <div className="bg-white rounded shadow-sm p-3">
+                      <h6 className="fw-bold mb-3">Exam Completion Overview</h6>
+                      <Doughnut data={donutData} />
+                    </div>
+                  </Col>
+                  <Col md={6} className="text-center">
+                    <div className="bg-white rounded shadow-sm p-3">
+                      <h6 className="fw-bold mb-3">Behavior Type Frequency</h6>
+                      <Bar
+                        data={barData}
+                        options={{
+                          responsive: true,
+                          plugins: {
+                            legend: { display: false },
+                            title: { display: false },
+                          },
+                          scales: {
+                            x: { ticks: { color: "#333" } },
+                            y: { beginAtZero: true, ticks: { color: "#333" } },
+                          },
+                        }}
+                      />
+                    </div>
+                  </Col>
+                </Row>
+              )}
 
               {/* ✅ Behavior Details Table */}
               <Table
