@@ -30,8 +30,13 @@ import {
   BarElement,
   Title,
 } from "chart.js";
+import "react-toastify/dist/ReactToastify.css";
+import "./../../styles/indicatior.css";
+import Swal from "sweetalert2";
+import api from "../../api";
+import apiWebRTC from "../../apiWebRTC";
 
-// Register chart elements
+// ✅ Register chart elements AFTER imports
 ChartJS.register(
   ArcElement,
   Tooltip,
@@ -41,12 +46,6 @@ ChartJS.register(
   BarElement,
   Title
 );
-
-import "react-toastify/dist/ReactToastify.css";
-import "./../../styles/indicatior.css";
-import Swal from "sweetalert2";
-import api from "../../api";
-import apiWebRTC from "../../apiWebRTC";
 
 const StudentBehavior = () => {
   const [exams, setExams] = useState([]);
