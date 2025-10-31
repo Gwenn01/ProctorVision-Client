@@ -619,95 +619,159 @@ const StudentBehavior = () => {
             Past Exam/Activity – {selectedExam?.title}
           </Modal.Title>
         </Modal.Header>
+
         <Modal.Body>
           {students.length ? (
-            <Table bordered hover responsive className="align-middle shadow-sm">
-              <thead className="table-light">
-                <tr>
-                  <th>Name</th>
-                  <th>Username</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                  <th>Exam Result</th>
-                </tr>
-              </thead>
-              <tbody>
-                {students.map((student) => (
-                  <tr key={student.id}>
-                    <td>{student.name}</td>
-                    <td className="text-muted">{student.username}</td>
-                    <td>
-                      {student.exam_status === "Did Not Take Exam" ? (
-                        <span className="badge bg-secondary">Did Not Take</span>
-                      ) : student.exam_status === "Cheated" ? (
-                        <span className="badge bg-danger">Cheating</span>
-                      ) : (
-                        <span className="badge bg-success">Completed</span>
-                      )}
-                    </td>
-                    <td>
-                      <Button
-                        variant="outline-primary"
-                        size="sm"
-                        disabled={loadingStudent === student.id}
-                        onClick={async () => {
-                          setLoadingStudent(student.id);
-                          await handleStudentClick(student);
-                          setLoadingStudent(null);
-                        }}
-                      >
-                        {loadingStudent === student.id ? (
-                          <>
-                            <Spinner
-                              as="span"
-                              animation="border"
-                              size="sm"
-                              role="status"
-                              className="me-2"
-                            />
-                            Loading...
-                          </>
-                        ) : (
-                          <>
-                            <i className="bi bi-eye me-1"></i> View
-                          </>
-                        )}
-                      </Button>
-                    </td>
-                    <td>
-                      <Button
-                        variant="outline-success"
-                        size="sm"
-                        disabled={loadingReview === student.id}
-                        onClick={async () => {
-                          setLoadingReview(student.id);
-                          await handleStudentReviewClick(student);
-                          setLoadingReview(null);
-                        }}
-                      >
-                        {loadingReview === student.id ? (
-                          <>
-                            <Spinner
-                              as="span"
-                              animation="border"
-                              size="sm"
-                              role="status"
-                              className="me-2"
-                            />
-                            Loading...
-                          </>
-                        ) : (
-                          <>
-                            <i className="bi bi-file-earmark-text me-1"></i>{" "}
-                            Review
-                          </>
-                        )}
-                      </Button>
-                    </td>
+            <>
+              {/* ✅ Behavior Summary Cards */}
+              <Row className="mb-4 text-center">
+                <Col md={3}>
+                  <div className="p-3 bg-primary text-white rounded shadow-sm">
+                    <h6 className="mb-0">
+                      <i className="bi bi-people me-1"></i> Total Students
+                    </h6>
+                    <h4 className="fw-bold mt-1">{students.length}</h4>
+                  </div>
+                </Col>
+                <Col md={3}>
+                  <div className="p-3 bg-danger text-white rounded shadow-sm">
+                    <h6 className="mb-0">
+                      <i className="bi bi-exclamation-triangle me-1"></i>{" "}
+                      Cheating
+                    </h6>
+                    <h4 className="fw-bold mt-1">
+                      {
+                        students.filter((s) => s.exam_status === "Cheated")
+                          .length
+                      }
+                    </h4>
+                  </div>
+                </Col>
+                <Col md={3}>
+                  <div className="p-3 bg-success text-white rounded shadow-sm">
+                    <h6 className="mb-0">
+                      <i className="bi bi-check-circle me-1"></i> Completed
+                    </h6>
+                    <h4 className="fw-bold mt-1">
+                      {
+                        students.filter((s) => s.exam_status === "Completed")
+                          .length
+                      }
+                    </h4>
+                  </div>
+                </Col>
+                <Col md={3}>
+                  <div className="p-3 bg-secondary text-white rounded shadow-sm">
+                    <h6 className="mb-0">
+                      <i className="bi bi-dash-circle me-1"></i> Did Not Take
+                    </h6>
+                    <h4 className="fw-bold mt-1">
+                      {
+                        students.filter(
+                          (s) => s.exam_status === "Did Not Take Exam"
+                        ).length
+                      }
+                    </h4>
+                  </div>
+                </Col>
+              </Row>
+
+              {/* ✅ Behavior Details Table */}
+              <Table
+                bordered
+                hover
+                responsive
+                className="align-middle shadow-sm"
+              >
+                <thead className="table-light">
+                  <tr>
+                    <th>Name</th>
+                    <th>Username</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                    <th>Exam Result</th>
                   </tr>
-                ))}
-              </tbody>
-            </Table>
+                </thead>
+                <tbody>
+                  {students.map((student) => (
+                    <tr key={student.id}>
+                      <td>{student.name}</td>
+                      <td className="text-muted">{student.username}</td>
+                      <td>
+                        {student.exam_status === "Did Not Take Exam" ? (
+                          <span className="badge bg-secondary">
+                            Did Not Take
+                          </span>
+                        ) : student.exam_status === "Cheated" ? (
+                          <span className="badge bg-danger">Cheating</span>
+                        ) : (
+                          <span className="badge bg-success">Completed</span>
+                        )}
+                      </td>
+                      <td>
+                        <Button
+                          variant="outline-primary"
+                          size="sm"
+                          disabled={loadingStudent === student.id}
+                          onClick={async () => {
+                            setLoadingStudent(student.id);
+                            await handleStudentClick(student);
+                            setLoadingStudent(null);
+                          }}
+                        >
+                          {loadingStudent === student.id ? (
+                            <>
+                              <Spinner
+                                as="span"
+                                animation="border"
+                                size="sm"
+                                role="status"
+                                className="me-2"
+                              />
+                              Loading...
+                            </>
+                          ) : (
+                            <>
+                              <i className="bi bi-eye me-1"></i> View
+                            </>
+                          )}
+                        </Button>
+                      </td>
+                      <td>
+                        <Button
+                          variant="outline-success"
+                          size="sm"
+                          disabled={loadingReview === student.id}
+                          onClick={async () => {
+                            setLoadingReview(student.id);
+                            await handleStudentReviewClick(student);
+                            setLoadingReview(null);
+                          }}
+                        >
+                          {loadingReview === student.id ? (
+                            <>
+                              <Spinner
+                                as="span"
+                                animation="border"
+                                size="sm"
+                                role="status"
+                                className="me-2"
+                              />
+                              Loading...
+                            </>
+                          ) : (
+                            <>
+                              <i className="bi bi-file-earmark-text me-1"></i>{" "}
+                              Review
+                            </>
+                          )}
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </>
           ) : (
             <p className="text-muted text-center">
               No behavior data available.
