@@ -288,7 +288,7 @@ const StudentBehavior = () => {
   const handlePastExamClick = async (exam) => {
     setSelectedExam(exam);
     setSelectedStudent(null);
-    setLoading(true);
+    //setLoading(true);
 
     try {
       // ✅ Fetch all student behaviors for this exam
@@ -393,7 +393,7 @@ const StudentBehavior = () => {
     if (!selectedExam) return toast.error("No exam selected.");
 
     try {
-      setLoading(true);
+      //setLoading(true);
       let res;
 
       if (selectedExam.exam_category?.toLowerCase() === "coding") {
