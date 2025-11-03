@@ -217,6 +217,7 @@ const CreateAccount = () => {
         username: formData.username,
         password: formData.password,
         link: verifyLink,
+        email: formData.email, // ✅ add this line
       });
 
       if (emailSent) {
