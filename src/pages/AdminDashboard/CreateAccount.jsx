@@ -84,84 +84,6 @@ const CreateAccount = () => {
     reader.readAsBinaryString(file);
   };
 
-  const handleExcelSubmit = async () => {
-    setLoading(true);
-
-    // Basic validations
-    if (
-      !excelMeta?.course ||
-      !excelMeta?.year ||
-      !excelMeta?.section ||
-      !excelMeta?.status
-    ) {
-      toast.error("Please select all meta fields for Excel import.");
-      setLoading(false);
-      return;
-    }
-
-    if (!excelData || excelData.length === 0) {
-      toast.error("No Excel data to submit.");
-      setLoading(false);
-      return;
-    }
-
-    try {
-      // Create students in bulk
-      const { data: result } = await api.post("/api/bulk_create_students", {
-        students: excelData,
-        meta: excelMeta,
-      });
-
-      // Success toast (prefer backend count if available)
-      const createdCount = result?.created_students?.length ?? excelData.length;
-      toast.success(`${createdCount} students imported successfully!`);
-
-      // Build base URL from your axios instance (no trailing slash)
-      const API_BASE = (api.defaults.baseURL || "").replace(/\/+$/, "");
-
-      // Send verification email per created student (if backend returns them)
-      if (Array.isArray(result?.created_students)) {
-        for (const student of result.created_students) {
-          const verifyLink = `${API_BASE}/api/verify?token=${encodeURIComponent(
-            student.verify_token
-          )}`;
-
-          const emailSent = await sendVerificationEmail({
-            to_email: student.email,
-            to_name: student.name,
-            username: student.username,
-            password: student.password,
-            link: verifyLink,
-          });
-
-          if (emailSent) {
-            toast.success(`Verification email sent to ${student.email}!`);
-          } else {
-            toast.error(
-              `Account created, but email failed to send for ${student.email}.`
-            );
-          }
-        }
-      }
-
-      // Clear local state after success
-      setExcelData([]);
-      if (typeof setExcelMeta === "function") {
-        setExcelMeta({});
-      }
-    } catch (err) {
-      const msg =
-        err?.response?.data?.error ||
-        err?.response?.data?.message ||
-        err?.message ||
-        "Server error during import.";
-      toast.error(msg);
-      console.error("Bulk import error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -204,10 +126,10 @@ const CreateAccount = () => {
 
       toast.success(result.message || "Account created successfully!");
 
-      // ✅ Build verify link from your API base URL
+      // ✅ Build verification link from your API base URL
       const API_BASE = (api.defaults.baseURL || "").replace(/\/+$/, "");
-      const verifyLink = `${API_BASE}/api/verify?token=${encodeURIComponent(
-        result.token
+      const verifyLink = `${API_BASE}/api/verify?user_id=${encodeURIComponent(
+        result.user_id
       )}`;
 
       // ✅ Send email using EmailJS helper
@@ -216,8 +138,8 @@ const CreateAccount = () => {
         to_name: formData.name,
         username: formData.username,
         password: formData.password,
+        user_id: result.user_id, // Pass the user_id here
         link: verifyLink,
-        email: formData.email, // ✅ add this line
       });
 
       if (emailSent) {
@@ -247,6 +169,83 @@ const CreateAccount = () => {
         toast.error("Server error: Failed to connect.");
       }
       console.error("Error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleExcelSubmit = async () => {
+    setLoading(true);
+
+    // Basic validations
+    if (
+      !excelMeta?.course ||
+      !excelMeta?.year ||
+      !excelMeta?.section ||
+      !excelMeta?.status
+    ) {
+      toast.error("Please select all meta fields for Excel import.");
+      setLoading(false);
+      return;
+    }
+
+    if (!excelData || excelData.length === 0) {
+      toast.error("No Excel data to submit.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Create students in bulk
+      const { data: result } = await api.post("/api/bulk_create_students", {
+        students: excelData,
+        meta: excelMeta,
+      });
+
+      // Success toast (prefer backend count if available)
+      const createdCount = result?.created_students?.length ?? excelData.length;
+      toast.success(`${createdCount} students imported successfully!`);
+
+      // Build base URL from your axios instance (no trailing slash)
+      const API_BASE = (api.defaults.baseURL || "").replace(/\/+$/, "");
+
+      // Send verification email per created student (if backend returns them)
+      if (Array.isArray(result?.created_students)) {
+        for (const student of result.created_students) {
+          const verifyLink = `${API_BASE}/api/verify?user_id=${encodeURIComponent(
+            student.user_id
+          )}`;
+
+          const emailSent = await sendVerificationEmail({
+            to_email: student.email,
+            to_name: student.name,
+            username: student.username,
+            password: student.password,
+            user_id: student.user_id, // Pass the user_id here
+          });
+
+          if (emailSent) {
+            toast.success(`Verification email sent to ${student.email}!`);
+          } else {
+            toast.error(
+              `Account created, but email failed to send for ${student.email}.`
+            );
+          }
+        }
+      }
+
+      // Clear local state after success
+      setExcelData([]);
+      if (typeof setExcelMeta === "function") {
+        setExcelMeta({});
+      }
+    } catch (err) {
+      const msg =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        err?.message ||
+        "Server error during import.";
+      toast.error(msg);
+      console.error("Bulk import error:", err);
     } finally {
       setLoading(false);
     }
