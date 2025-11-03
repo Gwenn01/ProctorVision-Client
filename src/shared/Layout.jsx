@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom"; // Remove BrowserRouter
 import Login from "../pages/LoginPage";
 import ProtectedRoute from "../components/ProtectedRoute";
 import Dashboard from "../pages/Dashboard";
+import VerificationSuccess from "../verification"; // Import the VerificationSuccess component
 
 const Layout = () => {
   return (
@@ -17,6 +18,8 @@ const Layout = () => {
           </ProtectedRoute>
         }
       />
+      {/* Add VerificationSuccess route */}
+      <Route path="/verification-success" element={<VerificationSuccess />} />
     </Routes>
   );
 };
