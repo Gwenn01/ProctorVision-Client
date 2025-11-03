@@ -131,7 +131,7 @@ const CreateAccount = () => {
       const verifyLink = `${API_BASE}/api/verify?user_id=${encodeURIComponent(
         result.user_id
       )}`;
-
+      console.log("Verification link:", verifyLink);
       // ✅ Send email using EmailJS helper
       const emailSent = await sendVerificationEmail({
         to_email: formData.email,
@@ -214,7 +214,7 @@ const CreateAccount = () => {
           const verifyLink = `${API_BASE}/api/verify?user_id=${encodeURIComponent(
             student.user_id
           )}`;
-
+          console.log("Verification link:", verifyLink);
           const emailSent = await sendVerificationEmail({
             to_email: student.email,
             to_name: student.name,
