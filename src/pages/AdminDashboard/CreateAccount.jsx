@@ -26,10 +26,12 @@ import {
   FaFileExcel,
 } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
+import { ProgressBar } from "react-bootstrap";
+import { FaExclamationCircle, FaCheckCircle } from "react-icons/fa";
 import "react-toastify/dist/ReactToastify.css";
 import * as XLSX from "xlsx";
 import { sendVerificationEmail } from "./utils/sendEamail";
-import api from "../../api"
+import api from "../../api";
 
 const CreateAccount = () => {
   const [userType, setUserType] = useState(null);
@@ -53,6 +55,11 @@ const CreateAccount = () => {
     status: "",
   });
   const [loading, setLoading] = useState(false);
+  const [passwordFocus, setPasswordFocus] = useState(false);
+
+  const hasNumber = /\d/.test(formData.password);
+  const hasMinLength = formData.password.length >= 8;
+  const strength = (hasNumber ? 50 : 0) + (hasMinLength ? 50 : 0);
 
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -77,78 +84,83 @@ const CreateAccount = () => {
     reader.readAsBinaryString(file);
   };
 
- const handleExcelSubmit = async () => {
-  setLoading(true);
+  const handleExcelSubmit = async () => {
+    setLoading(true);
 
-  // Basic validations
-  if (!excelMeta?.course || !excelMeta?.year || !excelMeta?.section || !excelMeta?.status) {
-    toast.error("Please select all meta fields for Excel import.");
-    setLoading(false);
-    return;
-  }
+    // Basic validations
+    if (
+      !excelMeta?.course ||
+      !excelMeta?.year ||
+      !excelMeta?.section ||
+      !excelMeta?.status
+    ) {
+      toast.error("Please select all meta fields for Excel import.");
+      setLoading(false);
+      return;
+    }
 
-  if (!excelData || excelData.length === 0) {
-    toast.error("No Excel data to submit.");
-    setLoading(false);
-    return;
-  }
+    if (!excelData || excelData.length === 0) {
+      toast.error("No Excel data to submit.");
+      setLoading(false);
+      return;
+    }
 
-  try {
-    // Create students in bulk
-    const { data: result } = await api.post("/api/bulk_create_students", {
-      students: excelData,
-      meta: excelMeta,
-    });
+    try {
+      // Create students in bulk
+      const { data: result } = await api.post("/api/bulk_create_students", {
+        students: excelData,
+        meta: excelMeta,
+      });
 
-    // Success toast (prefer backend count if available)
-    const createdCount = result?.created_students?.length ?? excelData.length;
-    toast.success(`${createdCount} students imported successfully!`);
+      // Success toast (prefer backend count if available)
+      const createdCount = result?.created_students?.length ?? excelData.length;
+      toast.success(`${createdCount} students imported successfully!`);
 
-    // Build base URL from your axios instance (no trailing slash)
-    const API_BASE = (api.defaults.baseURL || "").replace(/\/+$/, "");
+      // Build base URL from your axios instance (no trailing slash)
+      const API_BASE = (api.defaults.baseURL || "").replace(/\/+$/, "");
 
-    // Send verification email per created student (if backend returns them)
-    if (Array.isArray(result?.created_students)) {
-      for (const student of result.created_students) {
-        const verifyLink = `${API_BASE}/api/verify?token=${encodeURIComponent(
-          student.verify_token
-        )}`;
+      // Send verification email per created student (if backend returns them)
+      if (Array.isArray(result?.created_students)) {
+        for (const student of result.created_students) {
+          const verifyLink = `${API_BASE}/api/verify?token=${encodeURIComponent(
+            student.verify_token
+          )}`;
 
-        const emailSent = await sendVerificationEmail({
-          to_email: student.email,
-          to_name: student.name,
-          username: student.username,
-          password: student.password,
-          link: verifyLink,
-        });
+          const emailSent = await sendVerificationEmail({
+            to_email: student.email,
+            to_name: student.name,
+            username: student.username,
+            password: student.password,
+            link: verifyLink,
+          });
 
-        if (emailSent) {
-          toast.success(`Verification email sent to ${student.email}!`);
-        } else {
-          toast.error(
-            `Account created, but email failed to send for ${student.email}.`
-          );
+          if (emailSent) {
+            toast.success(`Verification email sent to ${student.email}!`);
+          } else {
+            toast.error(
+              `Account created, but email failed to send for ${student.email}.`
+            );
+          }
         }
       }
-    }
 
-    // Clear local state after success
-    setExcelData([]);
-    if (typeof setExcelMeta === "function") {
-      setExcelMeta({});
+      // Clear local state after success
+      setExcelData([]);
+      if (typeof setExcelMeta === "function") {
+        setExcelMeta({});
+      }
+    } catch (err) {
+      const msg =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        err?.message ||
+        "Server error during import.";
+      toast.error(msg);
+      console.error("Bulk import error:", err);
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    const msg =
-      err?.response?.data?.error ||
-      err?.response?.data?.message ||
-      err?.message ||
-      "Server error during import.";
-    toast.error(msg);
-    console.error("Bulk import error:", err);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -173,7 +185,9 @@ const CreateAccount = () => {
 
     //  Password validation
     if (!/^(?=.*\d).{8,}$/.test(formData.password)) {
-      toast.error("Password must be at least 8 characters and contain a number.");
+      toast.error(
+        "Password must be at least 8 characters and contain a number."
+      );
       setLoading(false);
       return;
     }
@@ -236,7 +250,6 @@ const CreateAccount = () => {
       setLoading(false);
     }
   };
-
 
   return (
     <Container className="py-5 d-flex justify-content-center">
@@ -331,9 +344,9 @@ const CreateAccount = () => {
                       />
                     </InputGroup>
                   </Form.Group>
-                  <Form.Group className="mb-3">
+                  <Form.Group className="mb-3 position-relative">
                     <Form.Label>Password</Form.Label>
-                    <InputGroup>
+                    <InputGroup hasValidation>
                       <InputGroup.Text>
                         <FaKey />
                       </InputGroup.Text>
@@ -342,10 +355,11 @@ const CreateAccount = () => {
                         name="password"
                         value={formData.password}
                         onChange={handleChange}
-                        pattern="^(?=.*\d)[A-Za-z\d]{8,16}$"
-                        maxLength={16}
-                        title="Password must be at least 8 characters and contain at least one number"
+                        onFocus={() => setPasswordFocus(true)}
+                        onBlur={() => setPasswordFocus(false)}
+                        placeholder="Enter password"
                         required
+                        isInvalid={!hasMinLength || !hasNumber}
                       />
                       <Button
                         variant="outline-secondary"
@@ -355,6 +369,40 @@ const CreateAccount = () => {
                         {showPassword ? <FaEyeSlash /> : <FaEye />}
                       </Button>
                     </InputGroup>
+
+                    {passwordFocus && (
+                      <div className="mt-2 p-2 border rounded bg-light shadow-sm password-rules">
+                        <div className="d-flex align-items-center mb-1">
+                          {hasMinLength ? (
+                            <FaCheckCircle className="text-success me-2" />
+                          ) : (
+                            <FaExclamationCircle className="text-danger me-2" />
+                          )}
+                          <small>Password must be at least 8 characters</small>
+                        </div>
+
+                        <div className="d-flex align-items-center">
+                          {hasNumber ? (
+                            <FaCheckCircle className="text-success me-2" />
+                          ) : (
+                            <FaExclamationCircle className="text-danger me-2" />
+                          )}
+                          <small>Must contain at least one number</small>
+                        </div>
+
+                        <ProgressBar
+                          now={strength}
+                          className="mt-2"
+                          variant={
+                            strength < 50
+                              ? "danger"
+                              : strength < 100
+                              ? "warning"
+                              : "success"
+                          }
+                        />
+                      </div>
+                    )}
                   </Form.Group>
                 </>
               )}
@@ -438,9 +486,9 @@ const CreateAccount = () => {
                     </InputGroup>
                   </Form.Group>
 
-                  <Form.Group className="mb-3">
+                  <Form.Group className="mb-3 position-relative">
                     <Form.Label>Password</Form.Label>
-                    <InputGroup>
+                    <InputGroup hasValidation>
                       <InputGroup.Text>
                         <FaKey />
                       </InputGroup.Text>
@@ -449,10 +497,11 @@ const CreateAccount = () => {
                         name="password"
                         value={formData.password}
                         onChange={handleChange}
-                        pattern="^(?=.*\d)[A-Za-z\d]{8,16}$"
-                        maxLength={16}
-                        title="Password must be at least 8 characters and contain at least one number"
+                        onFocus={() => setPasswordFocus(true)}
+                        onBlur={() => setPasswordFocus(false)}
+                        placeholder="Enter password"
                         required
+                        isInvalid={!hasMinLength || !hasNumber}
                       />
                       <Button
                         variant="outline-secondary"
@@ -462,6 +511,40 @@ const CreateAccount = () => {
                         {showPassword ? <FaEyeSlash /> : <FaEye />}
                       </Button>
                     </InputGroup>
+
+                    {passwordFocus && (
+                      <div className="mt-2 p-2 border rounded bg-light shadow-sm password-rules">
+                        <div className="d-flex align-items-center mb-1">
+                          {hasMinLength ? (
+                            <FaCheckCircle className="text-success me-2" />
+                          ) : (
+                            <FaExclamationCircle className="text-danger me-2" />
+                          )}
+                          <small>Password must be at least 8 characters</small>
+                        </div>
+
+                        <div className="d-flex align-items-center">
+                          {hasNumber ? (
+                            <FaCheckCircle className="text-success me-2" />
+                          ) : (
+                            <FaExclamationCircle className="text-danger me-2" />
+                          )}
+                          <small>Must contain at least one number</small>
+                        </div>
+
+                        <ProgressBar
+                          now={strength}
+                          className="mt-2"
+                          variant={
+                            strength < 50
+                              ? "danger"
+                              : strength < 100
+                              ? "warning"
+                              : "success"
+                          }
+                        />
+                      </div>
+                    )}
                   </Form.Group>
 
                   <Form.Group className="mb-3">
