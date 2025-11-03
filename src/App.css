@@ -162,11 +162,3 @@ video {
   transform-origin: center center;
   transition: all 0.3s ease-in-out;
 }
-
-.password-rules {
-  transition: all 0.3s ease;
-}
-.progress-bar {
-  height: 6px;
-  border-radius: 4px;
-}
