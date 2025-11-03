@@ -360,7 +360,12 @@ const CreateAccount = () => {
                         onBlur={() => setPasswordFocus(false)}
                         placeholder="Enter password"
                         required
-                        isInvalid={!hasMinLength || !hasNumber}
+                        maxLength={16} // Max length for password
+                        isInvalid={
+                          !hasMinLength ||
+                          !hasNumber ||
+                          formData.password.length > 16
+                        }
                       />
                       <Button
                         variant="outline-secondary"
@@ -389,6 +394,15 @@ const CreateAccount = () => {
                             <FaExclamationCircle className="text-danger me-2" />
                           )}
                           <small>Must contain at least one number</small>
+                        </div>
+
+                        <div className="d-flex align-items-center">
+                          {formData.password.length <= 16 ? (
+                            <FaCheckCircle className="text-success me-2" />
+                          ) : (
+                            <FaExclamationCircle className="text-danger me-2" />
+                          )}
+                          <small>Maximum length is 16 characters</small>
                         </div>
 
                         <ProgressBar
@@ -502,7 +516,12 @@ const CreateAccount = () => {
                         onBlur={() => setPasswordFocus(false)}
                         placeholder="Enter password"
                         required
-                        isInvalid={!hasMinLength || !hasNumber}
+                        maxLength={16} // Max length for password
+                        isInvalid={
+                          !hasMinLength ||
+                          !hasNumber ||
+                          formData.password.length > 16
+                        }
                       />
                       <Button
                         variant="outline-secondary"
@@ -531,6 +550,15 @@ const CreateAccount = () => {
                             <FaExclamationCircle className="text-danger me-2" />
                           )}
                           <small>Must contain at least one number</small>
+                        </div>
+
+                        <div className="d-flex align-items-center">
+                          {formData.password.length <= 16 ? (
+                            <FaCheckCircle className="text-success me-2" />
+                          ) : (
+                            <FaExclamationCircle className="text-danger me-2" />
+                          )}
+                          <small>Maximum length is 16 characters</small>
                         </div>
 
                         <ProgressBar
