@@ -123,15 +123,17 @@ const CreateAccount = () => {
 
       // Axios gives you data directly
       const result = response.data;
+      console.log(result); // Log the entire response object to check its structure
 
       toast.success(result.message || "Account created successfully!");
 
-      // ✅ Build verification link from your API base URL
       const API_BASE = (api.defaults.baseURL || "").replace(/\/+$/, "");
       const verifyLink = `${API_BASE}/api/verify?user_id=${encodeURIComponent(
-        result.user_id
+        result.user.id
       )}`;
+
       console.log("Verification link:", verifyLink);
+
       // ✅ Send email using EmailJS helper
       const emailSent = await sendVerificationEmail({
         to_email: formData.email,
