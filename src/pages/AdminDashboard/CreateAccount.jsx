@@ -221,6 +221,7 @@ const CreateAccount = () => {
             username: student.username,
             password: student.password,
             user_id: student.user_id, // Pass the user_id here
+            link: verifyLink,
           });
 
           if (emailSent) {
