@@ -43,6 +43,7 @@ const CreateAccount = () => {
     username: "",
     email: "",
     password: "",
+    confirmPassword: "",
     course: "",
     section: "",
     year: "",
@@ -111,6 +112,10 @@ const CreateAccount = () => {
         "Password must be at least 8 characters and contain a number."
       );
       setLoading(false);
+      return;
+    }
+    if (formData.password !== formData.confirmPassword) {
+      toast.error("Passwords do not match!");
       return;
     }
 
@@ -362,7 +367,7 @@ const CreateAccount = () => {
                         onBlur={() => setPasswordFocus(false)}
                         placeholder="Enter password"
                         required
-                        maxLength={16} // Max length for password
+                        maxLength={16}
                         isInvalid={
                           !hasMinLength ||
                           !hasNumber ||
@@ -418,6 +423,50 @@ const CreateAccount = () => {
                               : "success"
                           }
                         />
+                      </div>
+                    )}
+                  </Form.Group>
+
+                  {/* ✅ Confirm Password Field */}
+                  <Form.Group className="mb-3 position-relative">
+                    <Form.Label>Confirm Password</Form.Label>
+                    <InputGroup hasValidation>
+                      <InputGroup.Text>
+                        <FaKey />
+                      </InputGroup.Text>
+                      <Form.Control
+                        type={showPassword ? "text" : "password"}
+                        name="confirmPassword"
+                        value={formData.confirmPassword}
+                        onChange={handleChange}
+                        placeholder="Confirm password"
+                        required
+                        isInvalid={
+                          formData.confirmPassword.length > 0 &&
+                          formData.confirmPassword !== formData.password
+                        }
+                      />
+                      <Button
+                        variant="outline-secondary"
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? <FaEyeSlash /> : <FaEye />}
+                      </Button>
+                    </InputGroup>
+
+                    {formData.confirmPassword.length > 0 && (
+                      <div className="mt-2">
+                        {formData.confirmPassword === formData.password ? (
+                          <div className="text-success small d-flex align-items-center">
+                            <FaCheckCircle className="me-2" /> Passwords match
+                          </div>
+                        ) : (
+                          <div className="text-danger small d-flex align-items-center">
+                            <FaExclamationCircle className="me-2" /> Passwords
+                            do not match
+                          </div>
+                        )}
                       </div>
                     )}
                   </Form.Group>
@@ -518,7 +567,7 @@ const CreateAccount = () => {
                         onBlur={() => setPasswordFocus(false)}
                         placeholder="Enter password"
                         required
-                        maxLength={16} // Max length for password
+                        maxLength={16}
                         isInvalid={
                           !hasMinLength ||
                           !hasNumber ||
@@ -574,6 +623,50 @@ const CreateAccount = () => {
                               : "success"
                           }
                         />
+                      </div>
+                    )}
+                  </Form.Group>
+
+                  {/* ✅ Confirm Password Field */}
+                  <Form.Group className="mb-3 position-relative">
+                    <Form.Label>Confirm Password</Form.Label>
+                    <InputGroup hasValidation>
+                      <InputGroup.Text>
+                        <FaKey />
+                      </InputGroup.Text>
+                      <Form.Control
+                        type={showPassword ? "text" : "password"}
+                        name="confirmPassword"
+                        value={formData.confirmPassword}
+                        onChange={handleChange}
+                        placeholder="Confirm password"
+                        required
+                        isInvalid={
+                          formData.confirmPassword.length > 0 &&
+                          formData.confirmPassword !== formData.password
+                        }
+                      />
+                      <Button
+                        variant="outline-secondary"
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? <FaEyeSlash /> : <FaEye />}
+                      </Button>
+                    </InputGroup>
+
+                    {formData.confirmPassword.length > 0 && (
+                      <div className="mt-2">
+                        {formData.confirmPassword === formData.password ? (
+                          <div className="text-success small d-flex align-items-center">
+                            <FaCheckCircle className="me-2" /> Passwords match
+                          </div>
+                        ) : (
+                          <div className="text-danger small d-flex align-items-center">
+                            <FaExclamationCircle className="me-2" /> Passwords
+                            do not match
+                          </div>
+                        )}
                       </div>
                     )}
                   </Form.Group>
