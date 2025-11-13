@@ -16,7 +16,6 @@ import {
   BsClock,
   BsCheckCircle,
   BsBoxArrowInDownLeft,
-  BsExclamationTriangleFill,
   BsCpuFill,
 } from "react-icons/bs";
 import { Doughnut, Bar } from "react-chartjs-2";

@@ -486,7 +486,7 @@ const TakeExam = () => {
       params: { user_id: userData.id },
     });
 
-    const logs = response.data.filter((log) => log.exam_id === selectedExam.id);
+    //nst logs = response.data.filter((log) => log.exam_id === selectedExam.id);
     //setClassifiedLogs(logs.reverse());
   }, [selectedExam]);
 
