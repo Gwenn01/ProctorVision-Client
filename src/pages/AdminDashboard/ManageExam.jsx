@@ -10,11 +10,10 @@ import {
   Col,
   InputGroup,
 } from "react-bootstrap";
-import axios from "axios";
 import { FaChalkboardTeacher, FaEdit, FaTrash, FaSearch } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import api from "../../api"
+import api from "../../api";
 
 const ManageExam = () => {
   const [instructors, setInstructors] = useState([]);
@@ -47,7 +46,7 @@ const ManageExam = () => {
 
   const fetchInstructors = async () => {
     try {
-     const res = await api.get("/api/instructors");
+      const res = await api.get("/api/instructors");
       setInstructors(res.data);
       setFilteredInstructors(res.data);
     } catch (err) {
@@ -62,7 +61,7 @@ const ManageExam = () => {
     setLoadingExams(true);
 
     try {
-     const res = await api.get(`/api/exams/instructor/${instructorId}`);
+      const res = await api.get(`/api/exams/instructor/${instructorId}`);
       setExams(res.data);
       console.log(res.data);
     } catch (err) {
@@ -117,7 +116,7 @@ const ManageExam = () => {
     console.log("Submitting update:", updatedData);
 
     try {
-    await api.put(`/api/exams/${editExam.id}`, updatedData);
+      await api.put(`/api/exams/${editExam.id}`, updatedData);
       setEditModal(false);
       const res = await api.get(`/api/exams/instructor/${selectedInstructor}`);
       setExams(res.data);

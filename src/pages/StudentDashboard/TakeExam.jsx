@@ -29,7 +29,7 @@ const TakeExam = () => {
   const [timer, setTimer] = useState(0);
   const [isTakingExam, setIsTakingExam] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [warningMessage, setWarningMessage] = useState("");
+  // const [warningMessage, setWarningMessage] = useState("");
   const [showWarning, setShowWarning] = useState(false);
   //const [showCapturedModal, setShowCapturedModal] = useState(false);
   // const [classifiedLogs, setClassifiedLogs] = useState([]);
@@ -393,7 +393,7 @@ const TakeExam = () => {
         const isViolation = warn !== "Looking Forward" && !isNoFace;
         if (isViolation && warn !== prevWarnRef.current) {
           await playBeep();
-          setWarningMessage(warn);
+          //setWarningMessage(warn);
           setShowWarning(true);
         }
         prevWarnRef.current = warn;
@@ -486,7 +486,11 @@ const TakeExam = () => {
       params: { user_id: userData.id },
     });
 
-    //nst logs = response.data.filter((log) => log.exam_id === selectedExam.id);
+    const logs = response.data.filter((log) => log.exam_id === selectedExam.id);
+    if (import.meta.env.MODE === "development") {
+      console.log("Behavior logs loaded:", logs.length);
+    }
+
     //setClassifiedLogs(logs.reverse());
   }, [selectedExam]);
 
