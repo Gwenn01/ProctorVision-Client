@@ -35,12 +35,15 @@ const ManageBehavior = () => {
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
-    fetchStudents();
-  }, []);
+    const load = async () => {
+      await fetchStudents();
+    };
+    load();
+  }, []); // safe: no dependency needed
 
   useEffect(() => {
     applyFilters();
-  }, [students, filters]);
+  }, [students, filters]); // this is fine
 
   const fetchStudents = async () => {
     try {
